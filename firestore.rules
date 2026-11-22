@@ -65,6 +65,8 @@ service cloud.firestore {
 
     match /settings/{id} { allow read: if true; allow write: if isAdmin(); }
     match /upcoming/{id} { allow read: if true; allow write: if isAdmin(); }
+    match /lotMedia/{id} { allow read: if true; allow write: if isAdmin(); }
+    match /reviews/{id}  { allow read: if true; allow write: if isAdmin(); }
 
     match /sellers/{id} {
       allow create: if request.resource.data.keys().hasOnly(['name', 'phone', 'city', 'type', 'items', 'at'])
