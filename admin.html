@@ -35,7 +35,8 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--gold)}
 .msg{margin-top:10px;font-size:14px;color:var(--gold)}
 #app{display:none}
 /* tabs */
-.tabs{display:flex;gap:6px;overflow-x:auto;padding:14px 0;margin-bottom:6px}
+.tabs{display:flex;gap:6px;overflow-x:auto;padding:12px 0;margin-bottom:6px;position:sticky;top:69px;z-index:15;background:var(--bg)}
+.bad{border-color:var(--red)!important;box-shadow:0 0 0 3px rgba(224,72,72,.18)}
 .tab{font-family:inherit;cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--muted);padding:9px 16px;border-radius:30px;font-size:15px;font-weight:700;white-space:nowrap}
 .tab.on{background:var(--gold);border-color:var(--gold);color:#fff}
 .tab .cnt{background:var(--red);color:#fff;border-radius:20px;font-size:11px;padding:0 6px;margin-right:4px}
@@ -98,12 +99,12 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--gold)}
         <label>اسم القطعة</label><input id="lName" placeholder="عود كمبودي غرقي — قطعة واحدة">
         <label>الوسوم (افصل بينها بفاصلة)</label><input id="lTags" placeholder="كمبودي, 12 جرام, غرقي, ✔ مفحوص">
         <div class="row">
-          <div><label>سعر الافتتاح (ر.س)</label><input id="lStart" type="number" inputmode="numeric"></div>
-          <div><label>سعر «اشترِ الآن» (ر.س)</label><input id="lBuy" type="number" inputmode="numeric"></div>
+          <div><label>سعر الافتتاح (ر.س)</label><input id="lStart" type="text" inputmode="numeric"></div>
+          <div><label>سعر «اشترِ الآن» (ر.س) — اختياري</label><input id="lBuy" type="text" inputmode="numeric" placeholder="اتركه فارغاً إذا لا تريد شراء فوري"></div>
         </div>
         <label>مدة المزاد على القطعة</label>
         <div class="row" style="grid-template-columns:2fr 1fr">
-          <input id="lDur" type="number" inputmode="numeric" min="1" value="5">
+          <input id="lDur" type="text" inputmode="numeric" value="5">
           <select id="lUnit"><option value="1">ثانية</option><option value="60" selected>دقيقة</option><option value="3600">ساعة</option></select>
         </div>
         <label>صورة القطعة</label>
@@ -264,7 +265,7 @@ async function start(){
     $('lots').innerHTML = lots.map(l => { const m = media[l.id] || {};
       return `<div class="item"><div class="info">${m.image ? `<img class="thumb" src="${m.image}" alt="">` : `<div class="thumb">${m.videoUrl ? '🎬' : '📷'}</div>`}
         <div><b>${esc(l.name)}</b> <span class="st ${l.status}">${STATUS[l.status] || l.status}</span>${m.videoUrl ? ' <span class="st">🎬 فيديو</span>' : ''}<br>
-        <span class="muted">افتتاح ${fmt(l.startPrice)} · الحالي ${fmt(l.currentBid)} · فوري ${fmt(l.buyPrice)} ر.س${l.leaderName ? ' · المتصدّر: ' + (l.leaderPaddle ? '#' + l.leaderPaddle + ' ' : '') + esc(l.leaderName) : ''} · ${l.bidCount || 0} مزايدة · ${durTxt(l.durationSec)}</span></div></div>
+        <span class="muted">افتتاح ${fmt(l.startPrice)} · الحالي ${fmt(l.currentBid)}${l.buyPrice ? ' · فوري ' + fmt(l.buyPrice) : ''} ر.س${l.leaderName ? ' · المتصدّر: ' + (l.leaderPaddle ? '#' + l.leaderPaddle + ' ' : '') + esc(l.leaderName) : ''} · ${l.bidCount || 0} مزايدة · ${durTxt(l.durationSec)}</span></div></div>
         <div class="acts"><button class="btn ghost sm" data-img="${l.id}">📷 الصورة</button><button class="btn ghost sm" data-reset="${l.id}">إعادة</button><button class="btn red sm" data-del="${l.id}">حذف</button></div></div>`; }).join('') || '<p class="muted">لا توجد قطع بعد. أضف أول قطعة بالأسفل.</p>';
     document.querySelectorAll('[data-del]').forEach(b => b.onclick = () => { if (b.dataset.armed) { deleteDoc(doc(db, 'lots', b.dataset.del)); deleteDoc(doc(db, 'lotMedia', b.dataset.del)).catch(() => {}); } else { b.dataset.armed = 1; b.textContent = 'تأكيد الحذف'; } });
     document.querySelectorAll('[data-reset]').forEach(b => b.onclick = () => { const l = lots.find(x => x.id === b.dataset.reset);
@@ -301,12 +302,16 @@ async function start(){
   $('saveSettings').onclick = () => setDoc(doc(db, 'settings', 'live'), { title: $('sTitle').value.trim(), seller: $('sSeller').value.trim(), streamUrl: $('sStream').value.trim(), whatsapp: $('sWa').value.trim() }, { merge: true }).then(() => toast('تم الحفظ ✔'));
 
   $('addLot').onclick = async () => {
-    const name = $('lName').value.trim(), startPrice = Math.round(+$('lStart').value), buyPrice = Math.round(+$('lBuy').value);
-    const durationSec = Math.max(15, Math.round((+$('lDur').value || 1) * (+$('lUnit').value)));
+    const num = id => Math.round(+String($(id).value).replace(/[٠-٩]/g, c => '٠١٢٣٤٥٦٧٨٩'.indexOf(c)).replace(/[^\d.]/g, '') || 0);
+    const name = $('lName').value.trim(), startPrice = num('lStart'), buyPrice = num('lBuy');
+    const durationSec = Math.max(15, Math.round((num('lDur') || 1) * (+$('lUnit').value)));
     const videoUrl = $('lVideo').value.trim();
-    if (!name || !startPrice || !buyPrice) return toast('أكمل الاسم والأسعار');
-    if (buyPrice <= startPrice) return toast('سعر الشراء الفوري يجب أن يكون أعلى من سعر الافتتاح');
-    if (videoUrl && !/^https?:\/\//.test(videoUrl)) return toast('رابط الفيديو يجب أن يبدأ بـ https://');
+    document.querySelectorAll('.bad').forEach(e => e.classList.remove('bad'));
+    const fail = (id, msg) => { const el = $(id); el.classList.add('bad'); el.scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(() => el.focus(), 300); toast(msg); };
+    if (!name) return fail('lName', 'اكتب اسم القطعة');
+    if (!startPrice) return fail('lStart', 'اكتب سعر الافتتاح (رقم أكبر من صفر)');
+    if (buyPrice && buyPrice <= startPrice) return fail('lBuy', 'سعر «اشترِ الآن» يجب أن يكون أعلى من سعر الافتتاح — أو اتركه فارغاً');
+    if (videoUrl && !/^https?:\/\//.test(videoUrl)) return fail('lVideo', 'رابط الفيديو يجب أن يبدأ بـ https://');
     $('addLot').disabled = true;
     try {
       const order = lots.reduce((m, l) => Math.max(m, l.order || 0), 0) + 1;

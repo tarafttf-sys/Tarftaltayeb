@@ -540,6 +540,7 @@ function showLot(l){
   $('buyNow').innerHTML = done ? (l.status === 'sold' ? '✔ تم الشراء' : 'انتهى المزاد') : `اشترِ الآن بـ <span id="buyPrice">${fmt(l?.buyPrice)}</span> ر.س`;
   $('buyNow').classList.toggle('done', done); $('buyNow').classList.remove('armed');
   const off = !l || done; $('buyNow').disabled = off; $('buyNow').style.opacity = !l ? .5 : 1;
+  $('buyNow').style.display = (l && !l.buyPrice && !done) ? 'none' : '';
   document.querySelectorAll('.quick button, #paddle').forEach(b => b.disabled = off);
 }
 function showPrice(cur, leader, mine, startHint){
@@ -828,7 +829,7 @@ async function runLive(){
         if (d.status !== 'live' || d.endsAt.toMillis() <= Date.now()) throw new Error('انتهى وقت هذه القطعة');
         const val = isIncrement ? d.currentBid + amount : amount;
         const er = incError(val, d.currentBid); if (er) throw new Error(er);
-        if (val >= d.buyPrice) throw new Error('المبلغ وصل سعر «اشترِ الآن» — استخدم زر الشراء');
+        if (d.buyPrice && val >= d.buyPrice) throw new Error('المبلغ وصل سعر «اشترِ الآن» — استخدم زر الشراء');
         const upd = { currentBid: val, leaderName: name, leaderUid: u.uid, leaderPaddle: myPaddle, bidCount: (d.bidCount || 0) + 1 };
         if (d.endsAt.toMillis() - Date.now() < 10000) upd.endsAt = Timestamp.fromMillis(Date.now() + 10000);
         tx.update(r, upd);
@@ -846,6 +847,7 @@ async function runLive(){
       const u = await ensureUser(); await saveProfile(u); const id = live.id, nxt = nextQueued();
       await runTransaction(db, async tx => {
         const r = doc(db, 'lots', id); const d = (await tx.get(r)).data();
+        if (!d.buyPrice) throw new Error('لا يوجد شراء فوري لهذه القطعة');
         const nr = nxt ? doc(db, 'lots', nxt.id) : null; const nd = nr ? (await tx.get(nr)).data() : null;
         if (d.status !== 'live' || d.endsAt.toMillis() <= Date.now()) throw new Error('انتهى وقت هذه القطعة');
         tx.update(r, { currentBid: d.buyPrice, leaderName: name, leaderUid: u.uid, leaderPaddle: myPaddle, status: 'sold', soldPrice: d.buyPrice, bidCount: (d.bidCount || 0) + 1 });
