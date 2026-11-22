@@ -364,10 +364,6 @@ header{background:rgba(247,241,232,.95)!important}
             <button data-add="100">✋ ارفع المضرب <b>+100</b></button>
           </div>
         </div>
-        <div class="custom">
-          <input type="number" id="customBid" placeholder="مبلغ آخر (الزيادة 50 أو مضاعفاتها)" inputmode="numeric" step="50">
-          <button class="btn" id="customBtn">زايد</button>
-        </div>
         <button class="buy-now" id="buyNow">اشترِ الآن بـ <span id="buyPrice">0</span> ر.س</button>
         <div class="log" id="log"></div>
       </div>
@@ -483,7 +479,7 @@ header{background:rgba(247,241,232,.95)!important}
     </div>
     <p class="sup-mail">Taraft.tf@gmail.com</p>
     <div class="faq">
-      <details><summary>كيف أزايد؟</summary><p>اضغط +50 أو +100، أو اكتب مبلغاً آخر بزيادة 50 أو مضاعفاتها. في أول مزايدة نطلب اسمك ورقم جوالك.</p></details>
+      <details><summary>كيف أزايد؟</summary><p>ارفع المضرب +50 أو +100. في أول مزايدة نطلب اسمك ورقم جوالك.</p></details>
       <details><summary>ماذا يحدث إذا زايد أحد في آخر الوقت؟</summary><p>أي مزايدة في آخر 10 ثوانٍ تمدّد الوقت 10 ثوانٍ، حتى يأخذ الجميع فرصته.</p></details>
       <details><summary>ما معنى «اشترِ الآن»؟</summary><p>تشتري القطعة فوراً بالسعر المحدد وينتهي المزاد عليها. اضغط الزر مرتين للتأكيد.</p></details>
       <details><summary>فزت بقطعة، ماذا بعد؟</summary><p>تجد القطعة في «مشترياتي»، ونتواصل معك على جوالك لترتيب الدفع والتوصيل.</p></details>
@@ -544,7 +540,7 @@ function showLot(l){
   $('buyNow').innerHTML = done ? (l.status === 'sold' ? '✔ تم الشراء' : 'انتهى المزاد') : `اشترِ الآن بـ <span id="buyPrice">${fmt(l?.buyPrice)}</span> ر.س`;
   $('buyNow').classList.toggle('done', done); $('buyNow').classList.remove('armed');
   const off = !l || done; $('buyNow').disabled = off; $('buyNow').style.opacity = !l ? .5 : 1;
-  document.querySelectorAll('.quick button, #customBtn, #customBid, #paddle').forEach(b => b.disabled = off);
+  document.querySelectorAll('.quick button, #paddle').forEach(b => b.disabled = off);
 }
 function showPrice(cur, leader, mine, startHint){
   $('curBid').textContent = fmt(cur);
@@ -618,7 +614,6 @@ function renderMy(){
 const raisePaddle = () => { const p = $('paddle'); p.classList.remove('up'); void p.offsetWidth; p.classList.add('up'); };
 document.querySelectorAll('[data-add]').forEach(b => b.onclick = () => handlers.bid(+b.dataset.add, true));
 $('paddle').onclick = () => handlers.bid(50, true);
-$('customBtn').onclick = () => { const v = +$('customBid').value; if (v) { handlers.bid(v, false); $('customBid').value=''; } };
 let buyArmed = 0;
 $('buyNow').onclick = () => {
   if (Date.now() - buyArmed > 3000) { buyArmed = Date.now(); $('buyNow').classList.add('armed'); setTimeout(() => $('buyNow').classList.remove('armed'), 3000); toast('اضغط مرة ثانية لتأكيد الشراء'); return; }
