@@ -368,7 +368,8 @@ function showPrice(cur, leader, mine, startHint){
 }
 function showTimer(left){
   left = Math.max(0, left);
-  $('timer').textContent = String(Math.floor(left/60)).padStart(2,'0') + ':' + String(left%60).padStart(2,'0');
+  const h = Math.floor(left/3600), m = Math.floor(left%3600/60), sc = left%60, p = n => String(n).padStart(2,'0');
+  $('timer').textContent = (h ? h + ':' : '') + p(m) + ':' + p(sc);
   $('timer').classList.toggle('hot', left <= 10 && left > 0);
 }
 function showQueue(lots, curIdx){

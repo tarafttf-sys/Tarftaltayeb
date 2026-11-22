@@ -72,7 +72,11 @@ input:focus,textarea:focus{outline:none;border-color:var(--gold)}
         <div><label>سعر الافتتاح (ر.س)</label><input id="lStart" type="number" inputmode="numeric"></div>
         <div><label>سعر «اشترِ الآن» (ر.س)</label><input id="lBuy" type="number" inputmode="numeric"></div>
       </div>
-      <label>مدة المزاد على القطعة (ثانية)</label><input id="lDur" type="number" value="60">
+      <label>مدة المزاد على القطعة</label>
+      <div class="row" style="grid-template-columns:2fr 1fr">
+        <input id="lDur" type="number" inputmode="numeric" min="1" value="5">
+        <select id="lUnit"><option value="1">ثانية</option><option value="60" selected>دقيقة</option><option value="3600">ساعة</option></select>
+      </div>
       <button class="btn" id="addLot">إضافة</button>
     </div>
 
@@ -112,6 +116,7 @@ const $ = id => document.getElementById(id);
 const fmt = n => Number(n || 0).toLocaleString('en-US');
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let tt; const toast = t => { $('toast').textContent = t; $('toast').classList.add('show'); clearTimeout(tt); tt = setTimeout(() => $('toast').classList.remove('show'), 2500); };
+const durTxt = s => s >= 3600 && s % 3600 === 0 ? (s/3600) + ' ساعة' : s >= 60 && s % 60 === 0 ? (s/60) + ' دقيقة' : s + ' ثانية';
 const STATUS = { queued: 'في الانتظار', live: 'مباشر الآن', sold: 'بيعت', unsold: 'لم تُبع' };
 
 if (!firebaseConfig) { $('noConfig').style.display = 'block'; }
@@ -146,7 +151,7 @@ async function start(){
     unsubs.push(onSnapshot(query(collection(db, 'lots'), orderBy('order')), snap => {
       lots = snap.docs.map(x => ({ id: x.id, ...x.data() }));
       $('lots').innerHTML = lots.map(l => `<div class="item"><div><b>${esc(l.name)}</b> <span class="st ${l.status}">${STATUS[l.status] || l.status}</span><br>
-        <span class="muted">افتتاح ${fmt(l.startPrice)} · الحالي ${fmt(l.currentBid)} · شراء فوري ${fmt(l.buyPrice)} ر.س${l.leaderName ? ' · المتصدّر: ' + esc(l.leaderName) : ''} · ${l.bidCount || 0} مزايدة</span></div>
+        <span class="muted">افتتاح ${fmt(l.startPrice)} · الحالي ${fmt(l.currentBid)} · شراء فوري ${fmt(l.buyPrice)} ر.س${l.leaderName ? ' · المتصدّر: ' + esc(l.leaderName) : ''} · ${l.bidCount || 0} مزايدة · المدة ${durTxt(l.durationSec)}</span></div>
         <div class="acts"><button class="btn ghost sm" data-reset="${l.id}">إعادة</button><button class="btn red sm" data-del="${l.id}">حذف</button></div></div>`).join('') || '<p class="muted">لا توجد قطع بعد.</p>';
       document.querySelectorAll('[data-del]').forEach(b => b.onclick = () => { if (b.dataset.armed) deleteDoc(doc(db, 'lots', b.dataset.del)); else { b.dataset.armed = 1; b.textContent = 'تأكيد الحذف'; } });
       document.querySelectorAll('[data-reset]').forEach(b => b.onclick = () => { const l = lots.find(x => x.id === b.dataset.reset);
@@ -167,7 +172,7 @@ async function start(){
   $('saveSettings').onclick = () => setDoc(doc(db, 'settings', 'live'), { title: $('sTitle').value.trim(), seller: $('sSeller').value.trim(), streamUrl: $('sStream').value.trim() }, { merge: true }).then(() => toast('تم الحفظ ✔'));
 
   $('addLot').onclick = async () => {
-    const name = $('lName').value.trim(), startPrice = Math.round(+$('lStart').value), buyPrice = Math.round(+$('lBuy').value), durationSec = Math.max(15, Math.round(+$('lDur').value || 60));
+    const name = $('lName').value.trim(), startPrice = Math.round(+$('lStart').value), buyPrice = Math.round(+$('lBuy').value), durationSec = Math.max(15, Math.round((+$('lDur').value || 1) * (+$('lUnit').value)));
     if (!name || !startPrice || !buyPrice) return toast('أكمل الاسم والأسعار');
     if (buyPrice <= startPrice) return toast('سعر الشراء الفوري يجب أن يكون أعلى من سعر الافتتاح');
     const order = lots.reduce((m, l) => Math.max(m, l.order || 0), 0) + 1;
