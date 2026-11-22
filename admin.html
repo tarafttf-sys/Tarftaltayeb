@@ -46,6 +46,8 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--gold)}
 .media-pick .prev img{width:100%;height:100%;object-fit:cover}
 .file-btn{display:inline-block;cursor:pointer}
 .file-btn input{display:none}
+.wa{background:#25D366!important;color:#fff!important;text-decoration:none}
+.st.done{background:#3b7dd8;color:#fff}
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(120px);background:var(--card);border:1px solid var(--gold);padding:12px 20px;border-radius:12px;transition:.3s;z-index:50}
 .toast.show{transform:translateX(-50%) translateY(0)}
 @media(max-width:600px){.row{grid-template-columns:1fr}}
@@ -72,6 +74,7 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--gold)}
   <div id="app">
     <nav class="tabs" id="tabs">
       <button class="tab on" data-tab="lots">🔴 الجلسة والقطع</button>
+      <button class="tab" data-tab="wins">🏆 الفائزون <span class="cnt" id="winCnt" style="display:none"></span></button>
       <button class="tab" data-tab="settings">⚙️ البث والتواصل</button>
       <button class="tab" data-tab="up">📅 المزادات القادمة</button>
       <button class="tab" data-tab="sellers">🧾 البائعين <span class="cnt" id="sellCnt" style="display:none"></span></button>
@@ -115,6 +118,15 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--gold)}
         <input id="lVideo" dir="ltr" placeholder="رابط YouTube أو رابط مباشر لملف mp4">
         <p class="muted" style="margin-top:4px">إذا أضفت فيديو يظهر بدل الصورة وقت عرض القطعة.</p>
         <button class="btn" id="addLot">إضافة القطعة</button>
+      </div>
+    </div>
+
+    <!-- WINNERS -->
+    <div class="pane" id="pane-wins">
+      <div class="card">
+        <h2>الفائزون</h2>
+        <p class="muted">كل قطعة مباعة مع اسم الفائز ورقمه. تواصل معه بالواتساب لترتيب الدفع والتوصيل، ثم علّمها «تم التسليم».</p>
+        <div id="wins" style="margin-top:8px"></div>
       </div>
     </div>
 
@@ -230,7 +242,23 @@ async function start(){
     if (ok) load();
   });
 
-  let lots = [], media = {}, swapId = null;
+  let lots = [], media = {}, swapId = null; const bidders = {};
+  const waUrl = (ph, txt) => { let n = String(ph || '').replace(/\D/g, ''); if (n.startsWith('05')) n = '966' + n.slice(1); return `https://wa.me/${n}?text=${encodeURIComponent(txt)}`; };
+  async function renderWins(){
+    const sold = lots.filter(l => l.status === 'sold').reverse();
+    const pending = sold.filter(l => !l.delivered).length;
+    $('winCnt').textContent = pending; $('winCnt').style.display = pending ? '' : 'none';
+    await Promise.all(sold.filter(l => l.leaderUid && !(l.leaderUid in bidders)).map(async l => {
+      try { const b = await getDoc(doc(db, 'bidders', l.leaderUid)); bidders[l.leaderUid] = b.data() || null; } catch(e) { bidders[l.leaderUid] = null; } }));
+    $('wins').innerHTML = sold.map(l => { const b = bidders[l.leaderUid] || {}; const m = media[l.id] || {};
+      const msg = `السلام عليكم ${b.name || l.leaderName}، مبروك فوزك في مزاد ترفت الطيب بـ «${l.name}» بسعر ${fmt(l.soldPrice)} ر.س. نتواصل معك لترتيب الدفع والتوصيل.`;
+      return `<div class="item"><div class="info">${m.image ? `<img class="thumb" src="${m.image}" alt="">` : '<div class="thumb">🏆</div>'}
+        <div><b>${esc(l.name)}</b> ${l.delivered ? '<span class="st done">✔ تم التسليم</span>' : '<span class="st">بانتظار التسليم</span>'}<br>
+        <span class="muted">الفائز: <b>${esc(b.name || l.leaderName)}</b> · ${fmt(l.soldPrice)} ر.س${b.phone ? ` · <span dir="ltr">${esc(b.phone)}</span>` : ' · لا يوجد رقم'}</span></div></div>
+        <div class="acts">${b.phone ? `<a class="btn sm wa" href="${waUrl(b.phone, msg)}" target="_blank" rel="noopener">واتساب</a><a class="btn ghost sm" href="tel:${esc(b.phone)}">اتصال</a>` : ''}
+        <button class="btn ghost sm" data-dlv="${l.id}">${l.delivered ? 'إلغاء التسليم' : '✔ تم التسليم'}</button></div></div>`; }).join('') || '<p class="muted">لا توجد قطع مباعة بعد.</p>';
+    document.querySelectorAll('[data-dlv]').forEach(b => b.onclick = () => { const l = lots.find(x => x.id === b.dataset.dlv); updateDoc(doc(db, 'lots', l.id), { delivered: !l.delivered }); });
+  }
   function renderLots(){
     $('lots').innerHTML = lots.map(l => { const m = media[l.id] || {};
       return `<div class="item"><div class="info">${m.image ? `<img class="thumb" src="${m.image}" alt="">` : `<div class="thumb">${m.videoUrl ? '🎬' : '📷'}</div>`}
@@ -239,7 +267,7 @@ async function start(){
         <div class="acts"><button class="btn ghost sm" data-img="${l.id}">📷 الصورة</button><button class="btn ghost sm" data-reset="${l.id}">إعادة</button><button class="btn red sm" data-del="${l.id}">حذف</button></div></div>`; }).join('') || '<p class="muted">لا توجد قطع بعد. أضف أول قطعة بالأسفل.</p>';
     document.querySelectorAll('[data-del]').forEach(b => b.onclick = () => { if (b.dataset.armed) { deleteDoc(doc(db, 'lots', b.dataset.del)); deleteDoc(doc(db, 'lotMedia', b.dataset.del)).catch(() => {}); } else { b.dataset.armed = 1; b.textContent = 'تأكيد الحذف'; } });
     document.querySelectorAll('[data-reset]').forEach(b => b.onclick = () => { const l = lots.find(x => x.id === b.dataset.reset);
-      updateDoc(doc(db, 'lots', l.id), { status: 'queued', currentBid: l.startPrice, leaderName: '', leaderUid: '', bidCount: 0, soldPrice: 0, endsAt: Timestamp.now() }).then(() => toast('أُعيدت القطعة للانتظار')); });
+      updateDoc(doc(db, 'lots', l.id), { status: 'queued', currentBid: l.startPrice, leaderName: '', leaderUid: '', bidCount: 0, soldPrice: 0, delivered: false, endsAt: Timestamp.now() }).then(() => toast('أُعيدت القطعة للانتظار')); });
     document.querySelectorAll('[data-img]').forEach(b => b.onclick = () => { swapId = b.dataset.img; $('swapImg').value = ''; $('swapImg').click(); });
   }
   $('swapImg').onchange = async e => { const f = e.target.files[0]; if (!f || !swapId) return;
@@ -249,7 +277,7 @@ async function start(){
     const s = await getDoc(doc(db, 'settings', 'live')); const d = s.data() || {};
     $('sTitle').value = d.title || ''; $('sSeller').value = d.seller || ''; $('sStream').value = d.streamUrl || ''; $('sWa').value = d.whatsapp || '';
 
-    unsubs.push(onSnapshot(query(collection(db, 'lots'), orderBy('order')), snap => { lots = snap.docs.map(x => ({ id: x.id, ...x.data() })); renderLots(); }));
+    unsubs.push(onSnapshot(query(collection(db, 'lots'), orderBy('order')), snap => { lots = snap.docs.map(x => ({ id: x.id, ...x.data() })); renderLots(); renderWins(); }));
     unsubs.push(onSnapshot(collection(db, 'lotMedia'), snap => { media = {}; snap.forEach(x => media[x.id] = x.data()); renderLots(); }));
 
     unsubs.push(onSnapshot(query(collection(db, 'upcoming'), orderBy('order')), snap => {

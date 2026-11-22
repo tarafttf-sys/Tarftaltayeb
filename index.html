@@ -198,6 +198,13 @@ header{background:rgba(247,241,232,.95)!important}
 .my-item small{color:var(--muted)}
 .wa{background:#25D366!important;color:#fff!important;padding:7px 12px!important;font-size:13px!important;border-radius:10px;white-space:nowrap}
 .q-item .thumb{width:100%;height:70px;object-fit:cover;border-radius:8px;margin-bottom:6px;display:block}
+
+.quick{grid-template-columns:1fr 1fr!important}
+.quick button{font-size:18px!important;padding:12px 0!important}
+.buy-now{background:linear-gradient(135deg,#C9A24F,#9c7a35)!important;color:#fff!important;border:0!important;font-size:18px!important;font-weight:800!important;padding:15px!important;border-radius:14px!important;box-shadow:0 6px 16px rgba(166,124,46,.35);margin-top:4px;transition:.2s}
+.buy-now:hover{filter:brightness(1.06);transform:translateY(-1px)}
+.buy-now .bn-ic{font-size:20px;margin-left:4px}
+.buy-now.armed{background:linear-gradient(135deg,#e04848,#b83232)!important}
 </style>
 </head>
 <body>
@@ -242,7 +249,7 @@ header{background:rgba(247,241,232,.95)!important}
 <section id="live">
   <div class="wrap">
     <h2 class="sec-title">🔴 المزاد المباشر الآن</h2>
-    <p class="sec-sub" id="sessTitle">جلسة «نفائس الكمبودي» — كل قطعة لها وقت محدد، وأي مزايدة في آخر 10 ثوانٍ تمدّد الوقت.</p>
+    <p class="sec-sub" id="sessTitle">كل قطعة لها وقت محدد، وأي مزايدة في آخر 10 ثوانٍ تمدّد الوقت.</p>
     <div class="live-grid">
       <div>
         <div class="player">
@@ -263,7 +270,7 @@ header{background:rgba(247,241,232,.95)!important}
           <iframe id="streamFrame" title="البث المباشر" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen style="position:absolute;inset:0;width:100%;height:100%;border:0;display:none"></iframe>
           <div class="badge" id="liveBadge"><i></i>مباشر</div>
           <div class="viewers">👁 <span id="viewers">86</span> يشاهد</div>
-          <div class="seller">البائع: <b id="sellerName">دار الوجيه للعود</b> <small>✔ موثّق</small></div>
+          <div class="seller" id="sellerPill" style="display:none">البائع: <b id="sellerName"></b></div>
         </div>
         <div class="queue" id="queue"></div>
       </div>
@@ -286,13 +293,12 @@ header{background:rgba(247,241,232,.95)!important}
         <div class="quick">
           <button data-add="50">+50</button>
           <button data-add="100">+100</button>
-          <button data-add="250">+250</button>
         </div>
         <div class="custom">
-          <input type="number" id="customBid" placeholder="مبلغ آخر" inputmode="numeric">
+          <input type="number" id="customBid" placeholder="مبلغ آخر (الزيادة 50 أو مضاعفاتها)" inputmode="numeric" step="50">
           <button class="btn" id="customBtn">زايد</button>
         </div>
-        <button class="buy-now" id="buyNow">اشترِ الآن بـ <span id="buyPrice">0</span> ر.س</button>
+        <button class="buy-now" id="buyNow"><span class="bn-ic">🛒</span> اشترِ الآن بـ <span id="buyPrice">0</span> ر.س</button>
         <div class="log" id="log"></div>
       </div>
     </div>
@@ -377,8 +383,10 @@ header{background:rgba(247,241,232,.95)!important}
 <div class="modal" id="nameModal">
   <div class="card box">
     <h3>قبل أن تزايد</h3>
-    <p>اكتب اسمك الذي سيظهر في سجل المزايدات.</p>
-    <input id="nameInput" placeholder="مثال: أبو فهد" maxlength="20">
+    <p>اسمك يظهر في سجل المزايدات. رقم جوالك لا يظهر لأحد، ونتواصل معك عليه إذا فزت.</p>
+    <input id="nameInput" placeholder="الاسم" maxlength="20">
+    <input id="phoneInput" type="tel" dir="ltr" inputmode="tel" placeholder="05xxxxxxxx" maxlength="14" style="margin-top:8px;text-align:right">
+    <div id="nameErr" style="color:var(--red);font-size:13px;margin-top:6px"></div>
     <div style="display:flex;gap:8px;margin-top:14px">
       <button class="btn" id="nameOk" style="flex:1">متابعة</button>
       <button class="btn ghost" id="nameCancel">إلغاء</button>
@@ -405,17 +413,21 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt
 let tt; function toast(t){ const el=$('toast'); el.textContent=t; el.classList.add('show'); clearTimeout(tt); tt=setTimeout(()=>el.classList.remove('show'),2800); }
 
 /* ---------- shared UI ---------- */
-let myName = null; try { myName = localStorage.getItem('oud_name'); } catch(e){}
+let myName = null, myPhone = null; try { myName = localStorage.getItem('oud_name'); myPhone = localStorage.getItem('oud_phone'); } catch(e){}
+const normPhone = v => String(v || '').replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[^\d]/g, '').replace(/^9665/, '05').replace(/^5(\d{8})$/, '05$1');
 let nameResolve = null;
 function askName(){
   return new Promise(res => {
-    if (myName) return res(myName);
-    nameResolve = res; $('nameModal').classList.add('show'); $('nameInput').focus();
+    if (myName && myPhone) return res(myName);
+    nameResolve = res; $('nameInput').value = myName || ''; $('phoneInput').value = myPhone || ''; $('nameErr').textContent = '';
+    $('nameModal').classList.add('show'); $('nameInput').focus();
   });
 }
 $('nameOk').onclick = () => {
-  const v = $('nameInput').value.trim(); if (!v) return;
-  myName = v.slice(0,30); try { localStorage.setItem('oud_name', myName); } catch(e){}
+  const v = $('nameInput').value.trim(), ph = normPhone($('phoneInput').value);
+  if (!v) { $('nameErr').textContent = 'اكتب اسمك'; return; }
+  if (!/^05\d{8}$/.test(ph)) { $('nameErr').textContent = 'اكتب رقم جوال صحيح يبدأ بـ 05 (10 أرقام)'; return; }
+  myName = v.slice(0,30); myPhone = ph; try { localStorage.setItem('oud_name', myName); localStorage.setItem('oud_phone', myPhone); } catch(e){}
   $('nameModal').classList.remove('show'); nameResolve && nameResolve(myName); nameResolve = null;
 };
 $('nameCancel').onclick = () => { $('nameModal').classList.remove('show'); nameResolve && nameResolve(null); nameResolve = null; };
@@ -457,6 +469,13 @@ function addLog(html, cls){ const d=document.createElement('div'); if(cls) d.cla
 function setLiveBadge(on){ $('liveBadge').innerHTML = on ? '<i></i>مباشر' : 'غير مباشر'; $('liveBadge').style.background = on ? 'var(--red)' : '#6b5a4a'; }
 
 let handlers = { bid(){}, buy(){} };
+const MIN_INC = 50;
+function incError(val, base){
+  const inc = val - base;
+  if (inc < MIN_INC) return 'أقل زيادة ' + MIN_INC + ' ر.س — أعلى مزايدة الآن ' + fmt(base) + ' ر.س';
+  if (inc % MIN_INC) return 'الزيادة تكون 50 أو 100 أو مضاعفاتها (مثلاً ' + fmt(base + 50) + ' أو ' + fmt(base + 100) + ')';
+  return null;
+}
 let mediaMap = {}, curMedia = null, streamOn = false, getWins = () => [], waNumber = '';
 function setStats(sold, bids, up){ $('statSold').textContent = fmt(sold); $('statBids').textContent = fmt(bids); $('statUp').textContent = fmt(up); }
 function applyMedia(){
@@ -490,19 +509,16 @@ document.querySelectorAll('[data-add]').forEach(b => b.onclick = () => handlers.
 $('customBtn').onclick = () => { const v = +$('customBid').value; if (v) { handlers.bid(v, false); $('customBid').value=''; } };
 let buyArmed = 0;
 $('buyNow').onclick = () => {
-  if (Date.now() - buyArmed > 3000) { buyArmed = Date.now(); toast('اضغط مرة ثانية لتأكيد الشراء'); return; }
-  buyArmed = 0; handlers.buy();
+  if (Date.now() - buyArmed > 3000) { buyArmed = Date.now(); $('buyNow').classList.add('armed'); setTimeout(() => $('buyNow').classList.remove('armed'), 3000); toast('اضغط مرة ثانية لتأكيد الشراء'); return; }
+  buyArmed = 0; $('buyNow').classList.remove('armed'); handlers.buy();
 };
 
 /* ---------- upcoming ---------- */
-const defaultUpcoming = [
-  {when:'اليوم — 9:00 مساءً', title:'ليلة الدهن المعتّق', desc:'دهن عود هندي وكمبودي معتّق من 5 إلى 20 سنة.', seller:'متجر الأصالة'},
-  {when:'غداً — 8:30 مساءً', title:'مزاد الجملة', desc:'كميات بالكيلو للمحلات والتجار، بأسعار افتتاح منخفضة.', seller:'مؤسسة العود الملكي'},
-  {when:'الخميس — 10:00 مساءً', title:'نوادر المقتنين', desc:'قطع غرقي نادرة مفحوصة من خبير معتمد.', seller:'دار الوجيه للعود'},
-];
+const defaultUpcoming = [];
 let reminders = new Set(); try { reminders = new Set(JSON.parse(localStorage.getItem('oud_rem') || '[]')); } catch(e){}
 let upList = defaultUpcoming;
 function renderUp(){
+  if (!upList.length) { $('upGrid').innerHTML = '<p class="sec-sub">سيتم الإعلان عن الجلسات القادمة قريباً.</p>'; return; }
   $('upGrid').innerHTML = upList.map(u => { const k = u.title; const on = reminders.has(k);
     return `<div class="card up"><div class="when">⏰ ${esc(u.when)}</div><h4>${esc(u.title)}</h4><p>${esc(u.desc)}<br><small>البائع: ${esc(u.seller)}</small></p>
     <button class="btn ${on?'on':'ghost'}" data-rem="${esc(k)}">${on?'✔ تم التذكير':'🔔 ذكّرني'}</button></div>`; }).join('');
@@ -587,7 +603,7 @@ function runDemo(){
   handlers.bid = async (amount, isIncrement) => {
     if (left <= 0) return; const name = await askName(); if (!name) return;
     const val = isIncrement ? cur + amount : amount;
-    if (val <= cur) return toast('يجب أن تكون المزايدة أعلى من ' + fmt(cur) + ' ر.س');
+    const er = incError(val, cur); if (er) return toast(er);
     place(name, val); toast('تمت مزايدتك بـ ' + fmt(val) + ' ر.س');
   };
   handlers.buy = async () => {
@@ -608,6 +624,9 @@ async function runLive(){
   const auth = A.getAuth(app), db = getFirestore(app);
   $('viewers').parentElement.style.display = 'none';
   const ensureUser = async () => auth.currentUser || (await A.signInAnonymously(auth)).user;
+  let profSaved = '';
+  const saveProfile = async u => { const key = u.uid + myName + myPhone; if (profSaved === key) return;
+    await F.setDoc(doc(db, 'bidders', u.uid), { name: myName, phone: myPhone, at: serverTimestamp() }); profSaved = key; };
   ensureUser().catch(e => console.warn('auth', e));
 
   saveSeller = f => addDoc(collection(db, 'sellers'), {
@@ -617,7 +636,7 @@ async function runLive(){
   onSnapshot(doc(db, 'settings', 'live'), s => {
     const d = s.data() || {};
     if (d.title) $('sessTitle').textContent = d.title;
-    if (d.seller) $('sellerName').textContent = d.seller;
+    $('sellerName').textContent = d.seller || ''; $('sellerPill').style.display = d.seller ? '' : 'none';
     waNumber = d.whatsapp || '';
     setStream(d.streamUrl);
   });
@@ -682,12 +701,12 @@ async function runLive(){
     if (!live) return toast('لا يوجد مزاد مباشر الآن');
     const name = await askName(); if (!name) return;
     try {
-      const u = await ensureUser(); const id = live.id; let placed = 0;
+      const u = await ensureUser(); await saveProfile(u); const id = live.id; let placed = 0;
       await runTransaction(db, async tx => {
         const r = doc(db, 'lots', id); const d = (await tx.get(r)).data();
         if (d.status !== 'live' || d.endsAt.toMillis() <= Date.now()) throw new Error('انتهى وقت هذه القطعة');
         const val = isIncrement ? d.currentBid + amount : amount;
-        if (val <= d.currentBid) throw new Error('يجب أن تكون المزايدة أعلى من ' + fmt(d.currentBid) + ' ر.س');
+        const er = incError(val, d.currentBid); if (er) throw new Error(er);
         if (val >= d.buyPrice) throw new Error('المبلغ وصل سعر «اشترِ الآن» — استخدم زر الشراء');
         const upd = { currentBid: val, leaderName: name, leaderUid: u.uid, bidCount: (d.bidCount || 0) + 1 };
         if (d.endsAt.toMillis() - Date.now() < 10000) upd.endsAt = Timestamp.fromMillis(Date.now() + 10000);
@@ -703,7 +722,7 @@ async function runLive(){
     if (!live) return toast('لا يوجد مزاد مباشر الآن');
     const name = await askName(); if (!name) return;
     try {
-      const u = await ensureUser(); const id = live.id, nxt = nextQueued();
+      const u = await ensureUser(); await saveProfile(u); const id = live.id, nxt = nextQueued();
       await runTransaction(db, async tx => {
         const r = doc(db, 'lots', id); const d = (await tx.get(r)).data();
         const nr = nxt ? doc(db, 'lots', nxt.id) : null; const nd = nr ? (await tx.get(nr)).data() : null;
