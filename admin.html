@@ -7,7 +7,7 @@
 <title>لوحة التحكم — ترفت الطيب</title>
 <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@700&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#2a1b12;--bg2:#352418;--card:#3f2b1d;--line:#5a412d;--gold:#2bb0a2;--gold2:#e9d3a8;--text:#f5ecdc;--muted:#cdb898;--turq:#4fd6c6;--red:#e04848;--green:#4caf7a}
+:root{--bg:#F7F1E8;--bg2:#EFE5D6;--card:#FFFDF9;--line:#E2D3BE;--gold:#7A4E2D;--gold2:#A67C2E;--text:#3A2618;--muted:#806B57;--turq:#7A4E2D;--red:#e04848;--green:#4caf7a}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);line-height:1.7;padding-bottom:40px}
 .wrap{max-width:900px;margin:auto;padding:0 16px}
@@ -20,7 +20,7 @@ label{font-size:14px;color:var(--muted);display:block;margin:8px 0 4px}
 input,select,textarea{font-family:inherit;background:var(--bg2);border:1px solid var(--line);color:var(--text);padding:10px 12px;border-radius:10px;font-size:15px;width:100%}
 input:focus,textarea:focus{outline:none;border-color:var(--gold)}
 .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.btn{font-family:inherit;cursor:pointer;border:0;background:linear-gradient(135deg,var(--gold),#1c7f75);color:#fff;font-weight:800;padding:10px 16px;border-radius:12px;font-size:15px;margin-top:12px}
+.btn{font-family:inherit;cursor:pointer;border:0;background:linear-gradient(135deg,var(--gold),#5a3720);color:#fff;font-weight:800;padding:10px 16px;border-radius:12px;font-size:15px;margin-top:12px}
 .btn.ghost{background:transparent;color:var(--gold2);border:1px solid var(--gold)}
 .btn.red{background:var(--red)}
 .btn.sm{padding:5px 10px;font-size:13px;margin:0}
@@ -28,8 +28,8 @@ input:focus,textarea:focus{outline:none;border-color:var(--gold)}
 .item{border-bottom:1px solid var(--line);padding:10px 0;display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
 .item:last-child{border:0}
 .item .acts{display:flex;gap:6px;flex-wrap:wrap}
-.st{font-size:12px;padding:2px 10px;border-radius:20px;background:#4b3424}
-.st.live{background:var(--red)} .st.sold{background:var(--green)} .st.unsold{background:#6b5a4a}
+.st{font-size:12px;padding:2px 10px;border-radius:20px;background:#EADBC2}
+.st.live{background:var(--red);color:#fff} .st.sold{background:var(--green);color:#fff} .st.unsold{background:#b9a892;color:#fff}
 .msg{margin-top:10px;font-size:14px;color:var(--turq)}
 #app{display:none}
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(120px);background:var(--card);border:1px solid var(--gold);padding:12px 20px;border-radius:12px;transition:.3s}
