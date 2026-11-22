@@ -161,6 +161,43 @@ header{background:rgba(247,241,232,.95)!important}
 @keyframes rise2{0%{transform:translateY(60px) scaleX(.9);opacity:0}25%{opacity:1}100%{transform:translateY(-120px) scaleX(1.25);opacity:0}}
 .player .viewers{background:rgba(58,38,24,.75)!important;color:#fff}
 .player .seller{background:rgba(58,38,24,.82)!important}
+
+/* ---- media ---- */
+.lot-media{position:absolute;inset:0;width:100%;height:100%;border:0;object-fit:cover;display:none;background:#000}
+#lotImg{object-fit:cover;background:transparent}
+/* ---- timer circles ---- */
+.tc-wrap{text-align:center;margin-bottom:12px;background:var(--bg2);border-radius:14px;padding:12px 8px 14px}
+.tc-wrap>small{color:var(--muted);font-size:13px;display:block;margin-bottom:6px}
+.tc{display:flex;justify-content:center;gap:clamp(8px,3vw,18px)}
+.ring{position:relative;width:clamp(78px,22vw,104px);aspect-ratio:1}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring circle{fill:none;stroke-width:7}
+.ring .bg{stroke:#E2D3BE}
+.ring .fg{stroke:var(--gold);stroke-linecap:round;stroke-dasharray:276.46;stroke-dashoffset:0;transition:stroke-dashoffset .45s linear,stroke .3s}
+.ring b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:clamp(26px,7vw,36px);font-weight:800;color:var(--text);font-variant-numeric:tabular-nums;padding-bottom:12px}
+.ring span{position:absolute;bottom:22%;left:0;right:0;text-align:center;font-size:12px;color:var(--muted)}
+.ring.off{display:none}
+.tc.hot .fg{stroke:var(--red)}
+.tc.hot b{color:var(--red)}
+.tc.hot .ring:last-child{animation:pulse 1s ease-in-out infinite}
+@keyframes pulse{50%{transform:scale(1.06)}}
+.bid-now{justify-content:center!important;text-align:center}
+.bid-now b{font-size:36px!important}
+/* ---- categories ---- */
+.cat .ic{width:56px;height:56px;color:var(--gold);margin:0 auto 8px;display:block}
+/* ---- reviews ---- */
+.rev{padding:18px}
+.rev .stars{color:#C9A24F;letter-spacing:2px;margin-bottom:6px}
+.rev p{color:var(--text);font-size:15px;margin-bottom:8px}
+.rev small{color:var(--muted)}
+/* ---- purchases ---- */
+.my-item{display:flex;gap:10px;align-items:center;border-bottom:1px solid var(--line);padding:10px 0}
+.my-item img{width:54px;height:54px;object-fit:cover;border-radius:10px;background:var(--bg2)}
+.my-item div{flex:1}
+.my-item b{display:block;font-size:15px}
+.my-item small{color:var(--muted)}
+.wa{background:#25D366!important;color:#fff!important;padding:7px 12px!important;font-size:13px!important;border-radius:10px;white-space:nowrap}
+.q-item .thumb{width:100%;height:70px;object-fit:cover;border-radius:8px;margin-bottom:6px;display:block}
 </style>
 </head>
 <body>
@@ -177,6 +214,7 @@ header{background:rgba(247,241,232,.95)!important}
       <a href="#cats">الأقسام</a>
       <a href="#how">كيف نعمل</a>
       <a href="#sell">سجّل كبائع</a>
+      <a href="#my" id="myLink">🛍 مشترياتي</a>
     </nav>
     <a href="#live" class="btn">ادخل المزاد</a>
     <button class="menu-btn" id="menuBtn" aria-label="القائمة">☰</button>
@@ -193,9 +231,9 @@ header{background:rgba(247,241,232,.95)!important}
       <a href="#sell" class="btn ghost">اعرض عودك للبيع</a>
     </div>
     <div class="stats">
-      <div><b>+120</b><span>بائع موثّق</span></div>
-      <div><b>+3,400</b><span>قطعة بيعت</span></div>
-      <div><b>100%</b><span>دفع محفوظ</span></div>
+      <div><b id="statSold">0</b><span>قطعة بيعت</span></div>
+      <div><b id="statBids">0</b><span>مزايدة</span></div>
+      <div><b id="statUp">0</b><span>جلسة قادمة</span></div>
     </div>
   </div>
 </div>
@@ -219,6 +257,9 @@ header{background:rgba(247,241,232,.95)!important}
               </g>
             </svg>
           </div>
+          <img id="lotImg" class="lot-media" alt="">
+          <video id="lotVideo" class="lot-media" playsinline muted loop autoplay controls></video>
+          <iframe id="lotFrame" class="lot-media" title="فيديو القطعة" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
           <iframe id="streamFrame" title="البث المباشر" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen style="position:absolute;inset:0;width:100%;height:100%;border:0;display:none"></iframe>
           <div class="badge" id="liveBadge"><i></i>مباشر</div>
           <div class="viewers">👁 <span id="viewers">86</span> يشاهد</div>
@@ -230,9 +271,16 @@ header{background:rgba(247,241,232,.95)!important}
       <div class="card lot">
         <h3 id="lotName">—</h3>
         <div class="tags" id="lotTags"></div>
+        <div class="tc-wrap">
+          <small>الوقت المتبقي</small>
+          <div class="tc" id="tc">
+            <div class="ring" id="rH"><svg viewBox="0 0 100 100"><circle class="bg" cx="50" cy="50" r="44"/><circle class="fg" cx="50" cy="50" r="44"/></svg><b>00</b><span>ساعة</span></div>
+            <div class="ring" id="rM"><svg viewBox="0 0 100 100"><circle class="bg" cx="50" cy="50" r="44"/><circle class="fg" cx="50" cy="50" r="44"/></svg><b>00</b><span>دقيقة</span></div>
+            <div class="ring" id="rS"><svg viewBox="0 0 100 100"><circle class="bg" cx="50" cy="50" r="44"/><circle class="fg" cx="50" cy="50" r="44"/></svg><b>00</b><span>ثانية</span></div>
+          </div>
+        </div>
         <div class="bid-now">
           <div><small>أعلى مزايدة</small><b id="curBid">0</b> <span class="gold">ر.س</span></div>
-          <div style="text-align:left"><small>الوقت المتبقي</small><div class="timer" id="timer">00:00</div></div>
         </div>
         <div class="leader" id="leader">لا توجد مزايدات بعد</div>
         <div class="quick">
@@ -266,12 +314,12 @@ header{background:rgba(247,241,232,.95)!important}
     <h2 class="sec-title">الأقسام</h2>
     <p class="sec-sub">كل ما يخص العود في مكان واحد.</p>
     <div class="cats">
-      <div class="card cat"><div class="ic">🪵</div><b>عود خام</b><span>كمبودي، هندي، ماليزي، لاوسي</span></div>
-      <div class="card cat"><div class="ic">💧</div><b>دهن العود</b><span>معتّق وطبيعي</span></div>
-      <div class="card cat"><div class="ic">⚗️</div><b>المخلّطات</b><span>عطور وبخور مخلّط</span></div>
-      <div class="card cat"><div class="ic">🏺</div><b>المباخر</b><span>فخار، نحاس، فضة</span></div>
-      <div class="card cat"><div class="ic">💎</div><b>قطع المقتنين</b><span>نوادر وقطع غرقي</span></div>
-      <div class="card cat"><div class="ic">🎁</div><b>الهدايا</b><span>أطقم وصناديق فاخرة</span></div>
+      <div class="card cat"><svg class="ic" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 30 L14 14 L30 10 L40 20 L36 34 L20 38 Z" fill="#E9D9BE"/><path d="M15 22 C20 20 24 24 30 21"/><path d="M14 29 C20 27 26 31 33 27"/><path d="M20 15 C22 18 22 20 21 22"/></svg><b>عود خام</b><span>كمبودي، هندي، ماليزي، لاوسي</span></div>
+      <div class="card cat"><svg class="ic" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="18" y="6" width="12" height="6" rx="1.5" fill="#C9A24F"/><path d="M16 12 h16 v4 c4 3 6 7 6 12 v10 a4 4 0 0 1 -4 4 h-20 a4 4 0 0 1 -4 -4 v-10 c0 -5 2 -9 6 -12z" fill="#E9D9BE"/><path d="M24 24 c-3 4 -4 6 -4 8 a4 4 0 0 0 8 0 c0 -2 -1 -4 -4 -8z" fill="#7A4E2D" stroke="none"/></svg><b>دهن العود</b><span>معتّق وطبيعي</span></div>
+      <div class="card cat"><svg class="ic" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 6 h10 M21 6 v12 L10 38 a3 3 0 0 0 3 4 h22 a3 3 0 0 0 3 -4 L27 18 V6" fill="#E9D9BE"/><path d="M14 31 h20" /><circle cx="21" cy="35" r="1.6" fill="#7A4E2D" stroke="none"/><circle cx="27" cy="33" r="1.2" fill="#7A4E2D" stroke="none"/></svg><b>المخلّطات</b><span>عطور وبخور مخلّط</span></div>
+      <div class="card cat"><svg class="ic" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 4 c-3 3 3 5 0 8 M27 3 c-3 3 3 5 0 8" opacity=".6"/><path d="M10 14 l4 14 h20 l4 -14 c-3 2 -7 3 -14 3 s-11 -1 -14 -3z" fill="#E9D9BE"/><path d="M17 28 v8 M22 28 v8 M26 28 v8 M31 28 v8"/><path d="M13 36 h22 l3 7 h-28z" fill="#C9A24F"/></svg><b>المباخر</b><span>فخار، نحاس، فضة</span></div>
+      <div class="card cat"><svg class="ic" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 8 h20 l8 10 l-18 24 l-18 -24z" fill="#E9D9BE"/><path d="M6 18 h36 M18 8 l-4 10 l10 24 l10 -24 l-4 -10"/></svg><b>قطع المقتنين</b><span>نوادر وقطع غرقي</span></div>
+      <div class="card cat"><svg class="ic" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="18" width="34" height="8" rx="1.5" fill="#C9A24F"/><rect x="10" y="26" width="28" height="16" rx="1.5" fill="#E9D9BE"/><path d="M24 18 v24"/><path d="M24 18 c-4 -8 -12 -8 -11 -3 c1 3 6 3 11 3 c5 0 10 0 11 -3 c1 -5 -7 -5 -11 3z"/></svg><b>الهدايا</b><span>أطقم وصناديق فاخرة</span></div>
     </div>
   </div>
 </section>
@@ -287,6 +335,15 @@ header{background:rgba(247,241,232,.95)!important}
       <div class="card step"><div class="n">3</div><h4>مبلغك محفوظ</h4><p>يُحجز المبلغ لدى المنصة، ولا يُحوَّل للبائع إلا بعد استلامك ورضاك.</p></div>
       <div class="card step"><div class="n">4</div><h4>تقييم علني</h4><p>بعد كل بيعة تقيّم البائع، والتقييمات ظاهرة للجميع.</p></div>
     </div>
+  </div>
+</section>
+
+<!-- REVIEWS -->
+<section id="reviews" style="display:none">
+  <div class="wrap">
+    <h2 class="sec-title">آراء عملائنا</h2>
+    <p class="sec-sub">تجارب حقيقية من مشترين في مزادات ترفت الطيب.</p>
+    <div class="grid3" id="revGrid"></div>
   </div>
 </section>
 
@@ -328,6 +385,15 @@ header{background:rgba(247,241,232,.95)!important}
     </div>
   </div>
 </div>
+<!-- my purchases -->
+<div class="modal" id="myModal">
+  <div class="card box" style="max-width:460px">
+    <h3>🛍 مشترياتي</h3>
+    <p>القطع التي فزت بها من هذا الجهاز. تواصل مع البائع لإتمام الدفع والتوصيل.</p>
+    <div id="myList"></div>
+    <button class="btn ghost" id="myClose" style="margin-top:14px;width:100%">إغلاق</button>
+  </div>
+</div>
 <div class="toast" id="toast"></div>
 
 <script type="module">
@@ -366,24 +432,60 @@ function showPrice(cur, leader, mine, startHint){
     ? 'المتصدّر: <b class="gold">' + esc(leader) + (mine ? ' (أنت)' : '') + '</b>'
     : (startHint ? 'لا توجد مزايدات بعد — المزايدة تبدأ من ' + fmt(cur) + ' ر.س' : 'المزاد لم يبدأ بعد — تابع الجلسات القادمة');
 }
-function showTimer(left){
-  left = Math.max(0, left);
-  const h = Math.floor(left/3600), m = Math.floor(left%3600/60), sc = left%60, p = n => String(n).padStart(2,'0');
-  $('timer').textContent = (h ? h + ':' : '') + p(m) + ':' + p(sc);
-  $('timer').classList.toggle('hot', left <= 10 && left > 0);
+let lastTotal = 0;
+function showTimer(left, total){
+  left = Math.max(0, Math.floor(left || 0)); if (total) lastTotal = total; total = lastTotal || 60;
+  const h = Math.floor(left/3600), m = Math.floor(left%3600/60), sc = left%60;
+  const set = (id, val, frac) => { const r = $(id); r.querySelector('b').textContent = String(val).padStart(2,'0');
+    r.querySelector('.fg').style.strokeDashoffset = 276.46 * (1 - Math.max(0, Math.min(1, frac))); };
+  $('rH').classList.toggle('off', total < 3600);
+  set('rH', h, h / Math.max(1, Math.ceil(total/3600)));
+  set('rM', m, total < 3600 ? left / total : m / 60);
+  set('rS', sc, left ? (sc || 60) / 60 : 0);
+  $('tc').classList.toggle('hot', left <= 10 && left > 0);
 }
 function showQueue(lots, curIdx){
   $('queue').innerHTML = lots.map((l,i) => {
     const done = l.status === 'sold' || l.status === 'unsold' || (curIdx >= 0 && i < curIdx && !l.status);
     const cur = i === curIdx;
     const info = l.status === 'sold' ? 'بيعت بـ ' + fmt(l.soldPrice) + ' ر.س' : l.status === 'unsold' ? 'لم تُبع' : cur ? 'الآن' : 'يبدأ من ' + fmt(l.startPrice) + ' ر.س';
-    return `<div class="card q-item ${done?'done':''} ${cur?'cur':''}"><b>${i+1}. ${esc(l.name)}</b>${info}</div>`;
+    const th = l.id && mediaMap[l.id]?.image ? `<img class="thumb" src="${mediaMap[l.id].image}" alt="">` : '';
+    return `<div class="card q-item ${done?'done':''} ${cur?'cur':''}">${th}<b>${i+1}. ${esc(l.name)}</b>${info}</div>`;
   }).join('');
 }
 function addLog(html, cls){ const d=document.createElement('div'); if(cls) d.className=cls; d.innerHTML=html; $('log').prepend(d); }
 function setLiveBadge(on){ $('liveBadge').innerHTML = on ? '<i></i>مباشر' : 'غير مباشر'; $('liveBadge').style.background = on ? 'var(--red)' : '#6b5a4a'; }
 
 let handlers = { bid(){}, buy(){} };
+let mediaMap = {}, curMedia = null, streamOn = false, getWins = () => [], waNumber = '';
+function setStats(sold, bids, up){ $('statSold').textContent = fmt(sold); $('statBids').textContent = fmt(bids); $('statUp').textContent = fmt(up); }
+function applyMedia(){
+  const img = $('lotImg'), vid = $('lotVideo'), fr = $('lotFrame');
+  [img, vid, fr].forEach(e => e.style.display = 'none');
+  const m = streamOn ? {} : (curMedia || {});
+  const yt = ytId(m.videoUrl);
+  if (yt) { const src = `https://www.youtube.com/embed/${yt}?autoplay=1&mute=1&loop=1&playlist=${yt}&playsinline=1`; if (fr.src !== src) fr.src = src; fr.style.display = 'block'; }
+  else if (fr.getAttribute('src')) fr.removeAttribute('src');
+  if (!yt && m.videoUrl && /^https?:\/\//.test(m.videoUrl)) { if (vid.getAttribute('src') !== m.videoUrl) vid.src = m.videoUrl; vid.style.display = 'block'; vid.play().catch(() => {}); }
+  else { try { vid.pause(); } catch(e){} if (vid.getAttribute('src')) vid.removeAttribute('src'); }
+  if (!yt && !m.videoUrl && m.image) { img.src = m.image; img.style.display = 'block'; }
+}
+function renderReviews(list){
+  $('reviews').style.display = list.length ? '' : 'none';
+  $('revGrid').innerHTML = list.map(r => `<div class="card rev"><div class="stars">${'★'.repeat(Math.max(1, Math.min(5, r.stars || 5)))}</div><p>«${esc(r.text)}»</p><small>${esc(r.name)}${r.city ? ' — ' + esc(r.city) : ''}</small></div>`).join('');
+}
+function waLink(text){
+  let n = String(waNumber || '').replace(/\D/g, '');
+  if (n.startsWith('00')) n = n.slice(2); else if (n.startsWith('05')) n = '966' + n.slice(1); else if (n.startsWith('5') && n.length === 9) n = '966' + n;
+  return n ? `https://wa.me/${n}?text=${encodeURIComponent(text)}` : null;
+}
+function renderMy(){
+  const w = getWins();
+  $('myList').innerHTML = w.length ? w.map(x => {
+    const l = waLink(`السلام عليكم، فزت في مزاد ترفت الطيب بـ «${x.name}» بسعر ${fmt(x.price)} ر.س. الاسم: ${myName || ''}`);
+    return `<div class="my-item">${x.image ? `<img src="${x.image}" alt="">` : ''}<div><b>${esc(x.name)}</b><small>${fmt(x.price)} ر.س</small></div>${l ? `<a class="btn wa" href="${l}" target="_blank" rel="noopener">واتساب البائع</a>` : `<small>${EMAIL}</small>`}</div>`;
+  }).join('') : '<p class="sec-sub" style="margin:10px 0">لم تفز بأي قطعة بعد — شارك في المزاد المباشر!</p>';
+}
 document.querySelectorAll('[data-add]').forEach(b => b.onclick = () => handlers.bid(+b.dataset.add, true));
 $('customBtn').onclick = () => { const v = +$('customBid').value; if (v) { handlers.bid(v, false); $('customBid').value=''; } };
 let buyArmed = 0;
@@ -421,6 +523,7 @@ function setStream(url){
   const id = ytId(url), f = $('streamFrame');
   if (id) { const src = `https://www.youtube.com/embed/${id}?autoplay=1&mute=1&playsinline=1`; if (f.src !== src) f.src = src; f.style.display = 'block'; }
   else { f.removeAttribute('src'); f.style.display = 'none'; }
+  streamOn = !!id; applyMedia();
 }
 
 /* ---------- seller form ---------- */
@@ -455,17 +558,18 @@ function runDemo(){
     {name:'قطعة مقتنين — عود تراد نادر', tags:['تراد','28 جرام','نادر','✔ مفحوص'], startPrice:5000, buyPrice:12000, durationSec:50},
   ];
   const bots = ['أبو خالد','بخور الرياض','أبو ناصر','عطارة جدة','أم سلطان','أبو عبدالله','دار المسك'];
-  let idx = 0, cur = 0, leader = null, left = 0, tick = null;
+  let idx = 0, cur = 0, leader = null, left = 0, tick = null, dSold = 0, dBids = 0;
+  getWins = () => lots.filter(l => l.status === 'sold' && l.soldTo === myName).map(l => ({ name: l.name, price: l.soldPrice }));
   setLiveBadge(true);
-  const upd = () => { showPrice(cur, leader, leader && leader === myName, true); showTimer(left); };
+  const upd = () => { showPrice(cur, leader, leader && leader === myName, true); showTimer(left, lots[idx]?.durationSec); setStats(dSold, dBids, upList.length); };
   const log = (who, amount) => addLog(`<span>${esc(who)}</span><span>${fmt(amount)} ر.س</span>`, who === myName ? 'me' : '');
   function start(){
-    if (idx >= lots.length) { idx = 0; lots.forEach(l => { delete l.status; delete l.soldPrice; }); }
+    if (idx >= lots.length) { idx = 0; lots.forEach(l => { delete l.status; delete l.soldPrice; delete l.soldTo; }); }
     const l = lots[idx]; cur = l.startPrice; leader = null; left = l.durationSec;
     showLot(l); $('log').innerHTML = ''; addLog('بدأ المزاد على القطعة رقم ' + (idx+1), 'sys');
     showQueue(lots, idx); upd(); clearInterval(tick); tick = setInterval(step, 1000);
   }
-  function place(who, amount){ if (amount <= cur) return; cur = amount; leader = who; if (left < 10) left = 10; log(who, amount); upd(); }
+  function place(who, amount){ if (amount <= cur) return; dBids++; cur = amount; leader = who; if (left < 10) left = 10; log(who, amount); upd(); }
   function step(){
     left--; const l = lots[idx];
     if (left > 0 && cur < l.buyPrice * 0.92 && Math.random() < (left < 12 ? 0.45 : 0.22)) {
@@ -476,7 +580,7 @@ function runDemo(){
   }
   function end(){
     clearInterval(tick); const l = lots[idx];
-    if (leader) { l.status = 'sold'; l.soldPrice = cur; addLog('🔨 بيعت لـ ' + esc(leader) + ' بـ ' + fmt(cur) + ' ر.س', 'sys'); if (leader === myName) toast('مبروك! فزت بالقطعة 🎉'); }
+    if (leader) { l.status = 'sold'; l.soldPrice = cur; l.soldTo = leader; dSold++; addLog('🔨 بيعت لـ ' + esc(leader) + ' بـ ' + fmt(cur) + ' ر.س', 'sys'); if (leader === myName) toast('مبروك! فزت بالقطعة 🎉'); }
     else { l.status = 'unsold'; addLog('انتهى الوقت بدون مزايدات', 'sys'); }
     left = 0; upd(); idx++; showQueue(lots, idx); setTimeout(start, 4000);
   }
@@ -502,6 +606,7 @@ async function runLive(){
   const { getFirestore, collection, doc, query, orderBy, limit, onSnapshot, runTransaction, addDoc, serverTimestamp, Timestamp } = F;
   const app = initializeApp(firebaseConfig);
   const auth = A.getAuth(app), db = getFirestore(app);
+  $('viewers').parentElement.style.display = 'none';
   const ensureUser = async () => auth.currentUser || (await A.signInAnonymously(auth)).user;
   ensureUser().catch(e => console.warn('auth', e));
 
@@ -513,14 +618,22 @@ async function runLive(){
     const d = s.data() || {};
     if (d.title) $('sessTitle').textContent = d.title;
     if (d.seller) $('sellerName').textContent = d.seller;
+    waNumber = d.whatsapp || '';
     setStream(d.streamUrl);
   });
   onSnapshot(query(collection(db, 'upcoming'), orderBy('order')), s => {
     upList = s.empty ? [] : s.docs.map(d => d.data());
+    $('statUp').textContent = fmt(upList.length);
     if (!upList.length) $('upGrid').innerHTML = '<p class="sec-sub">سيتم الإعلان عن الجلسات القادمة قريباً.</p>'; else renderUp();
   });
 
   let lots = [], live = null, liveId = null, bidsUnsub = null, busy = false;
+  getWins = () => lots.filter(l => l.status === 'sold' && l.leaderUid && l.leaderUid === auth.currentUser?.uid).map(l => ({ name: l.name, price: l.soldPrice, image: mediaMap[l.id]?.image }));
+  onSnapshot(collection(db, 'lotMedia'), s => {
+    mediaMap = {}; s.forEach(d => mediaMap[d.id] = d.data());
+    curMedia = live ? mediaMap[live.id] || null : null; applyMedia(); showQueue(lots, live ? lots.indexOf(live) : -1);
+  });
+  onSnapshot(query(collection(db, 'reviews'), orderBy('order')), s => renderReviews(s.docs.map(d => d.data())));
   const notified = new Set();
   const nextQueued = () => lots.find(l => l.status === 'queued');
   const leftOf = l => l ? Math.ceil((l.endsAt.toMillis() - Date.now()) / 1000) : 0;
@@ -531,6 +644,8 @@ async function runLive(){
     const uid = auth.currentUser?.uid;
     lots.forEach(l => { if (l.status === 'sold' && uid && l.leaderUid === uid && !notified.has(l.id)) { notified.add(l.id); if (snap.metadata.hasPendingWrites || Date.now() - (l.endsAt?.toMillis?.() || 0) < 60000) toast('مبروك! فزت بـ «' + l.name + '» 🎉'); } });
     setLiveBadge(!!live);
+    curMedia = live ? mediaMap[live.id] || null : null; applyMedia();
+    setStats(lots.filter(l => l.status === 'sold').length, lots.reduce((a, l) => a + (l.bidCount || 0), 0), upList.length);
     showLot(live); showQueue(lots, live ? lots.indexOf(live) : -1);
     showPrice(live ? live.currentBid : 0, live?.leaderName, live && live.leaderUid === uid, !!live);
     if ((live?.id || null) !== liveId) {
@@ -559,7 +674,7 @@ async function runLive(){
     } catch (e) { console.warn('close', e.code || e); }
     setTimeout(() => busy = false, 3000);
   }
-  setInterval(() => { showTimer(leftOf(live)); closeExpired(); }, 500);
+  setInterval(() => { showTimer(leftOf(live), live?.durationSec); closeExpired(); }, 500);
 
   const errMsg = e => e?.code === 'permission-denied' ? 'تعذّرت العملية — ربما انتهى الوقت أو سبقك أحد' : (e?.message || 'حدث خطأ، حاول مرة أخرى');
 
@@ -601,6 +716,9 @@ async function runLive(){
     } catch (e) { toast(errMsg(e)); }
   };
 }
+
+$('myLink').onclick = e => { e.preventDefault(); $('links').classList.remove('open'); renderMy(); $('myModal').classList.add('show'); };
+$('myClose').onclick = () => $('myModal').classList.remove('show');
 
 if (firebaseConfig) {
   runLive().catch(e => { console.error(e); toast('تعذّر الاتصال بالخادم — يعمل الموقع الآن في وضع العرض'); saveSeller = null; runDemo(); });
