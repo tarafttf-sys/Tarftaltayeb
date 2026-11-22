@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>لوحة التحكم — ترفت الطيب</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@700&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#2a1b12;--bg2:#352418;--card:#3f2b1d;--line:#5a412d;--gold:#2bb0a2;--gold2:#e9d3a8;--text:#f5ecdc;--muted:#cdb898;--turq:#4fd6c6;--red:#e04848;--green:#4caf7a}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);line-height:1.7;padding-bottom:40px}
+.wrap{max-width:900px;margin:auto;padding:0 16px}
+header{border-bottom:1px solid var(--line);padding:14px 0;margin-bottom:20px}
+header .wrap{display:flex;justify-content:space-between;align-items:center}
+h1{font-family:'Amiri',serif;color:var(--gold2);font-size:26px}
+h2{font-family:'Amiri',serif;color:var(--gold2);font-size:22px;margin-bottom:10px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:18px}
+label{font-size:14px;color:var(--muted);display:block;margin:8px 0 4px}
+input,select,textarea{font-family:inherit;background:var(--bg2);border:1px solid var(--line);color:var(--text);padding:10px 12px;border-radius:10px;font-size:15px;width:100%}
+input:focus,textarea:focus{outline:none;border-color:var(--gold)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn{font-family:inherit;cursor:pointer;border:0;background:linear-gradient(135deg,var(--gold),#1c7f75);color:#fff;font-weight:800;padding:10px 16px;border-radius:12px;font-size:15px;margin-top:12px}
+.btn.ghost{background:transparent;color:var(--gold2);border:1px solid var(--gold)}
+.btn.red{background:var(--red)}
+.btn.sm{padding:5px 10px;font-size:13px;margin:0}
+.muted{color:var(--muted);font-size:14px}
+.item{border-bottom:1px solid var(--line);padding:10px 0;display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
+.item:last-child{border:0}
+.item .acts{display:flex;gap:6px;flex-wrap:wrap}
+.st{font-size:12px;padding:2px 10px;border-radius:20px;background:#4b3424}
+.st.live{background:var(--red)} .st.sold{background:var(--green)} .st.unsold{background:#6b5a4a}
+.msg{margin-top:10px;font-size:14px;color:var(--turq)}
+#app{display:none}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(120px);background:var(--card);border:1px solid var(--gold);padding:12px 20px;border-radius:12px;transition:.3s}
+.toast.show{transform:translateX(-50%) translateY(0)}
+@media(max-width:600px){.row{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header><div class="wrap"><h1>لوحة تحكم ترفت الطيب</h1><button class="btn ghost sm" id="outBtn" style="display:none">خروج</button></div></header>
+<div class="wrap">
+
+  <div class="card" id="noConfig" style="display:none">
+    <h2>الخطوة الأولى</h2>
+    <p class="muted">لم تُضف إعدادات Firebase بعد. افتح ملف <b>config.js</b> والصق فيه إعدادات مشروعك، ثم ارفع الملفات من جديد.</p>
+  </div>
+
+  <div class="card" id="login" style="display:none">
+    <h2>تسجيل دخول المدير</h2>
+    <label>البريد</label><input id="email" type="email" value="taraft.tf@gmail.com" dir="ltr">
+    <label>كلمة المرور</label><input id="pass" type="password" dir="ltr">
+    <button class="btn" id="inBtn">دخول</button>
+    <button class="btn ghost" id="upBtn">إنشاء حساب المدير (أول مرة فقط)</button>
+    <div class="msg" id="loginMsg"></div>
+  </div>
+
+  <div id="app">
+    <div class="card">
+      <h2>إعدادات البث</h2>
+      <label>عنوان الجلسة</label><input id="sTitle" placeholder="جلسة «نفائس الكمبودي» — ...">
+      <label>اسم البائع</label><input id="sSeller" placeholder="دار الوجيه للعود">
+      <label>رابط البث من YouTube Live (اختياري)</label><input id="sStream" dir="ltr" placeholder="https://youtube.com/live/...">
+      <button class="btn" id="saveSettings">حفظ</button>
+    </div>
+
+    <div class="card">
+      <h2>إضافة قطعة للمزاد</h2>
+      <label>اسم القطعة</label><input id="lName" placeholder="عود كمبودي غرقي — قطعة واحدة">
+      <label>الوسوم (افصل بينها بفاصلة)</label><input id="lTags" placeholder="كمبودي, 12 جرام, غرقي, ✔ مفحوص">
+      <div class="row">
+        <div><label>سعر الافتتاح (ر.س)</label><input id="lStart" type="number" inputmode="numeric"></div>
+        <div><label>سعر «اشترِ الآن» (ر.س)</label><input id="lBuy" type="number" inputmode="numeric"></div>
+      </div>
+      <label>مدة المزاد على القطعة (ثانية)</label><input id="lDur" type="number" value="60">
+      <button class="btn" id="addLot">إضافة</button>
+    </div>
+
+    <div class="card">
+      <h2>قطع الجلسة</h2>
+      <p class="muted">تُعرض القطع بالترتيب. «ابدأ الجلسة» يفتح أول قطعة في الانتظار، وبعدها تنتقل القطع تلقائياً.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn" id="startBtn">▶ ابدأ الجلسة</button>
+        <button class="btn ghost" id="endNowBtn">⏹ أنهِ القطعة الحالية الآن</button>
+      </div>
+      <div id="lots" style="margin-top:12px"></div>
+    </div>
+
+    <div class="card">
+      <h2>المزادات القادمة</h2>
+      <div class="row">
+        <div><label>الموعد</label><input id="uWhen" placeholder="الخميس — 10:00 مساءً"></div>
+        <div><label>العنوان</label><input id="uTitle" placeholder="نوادر المقتنين"></div>
+      </div>
+      <label>الوصف</label><input id="uDesc">
+      <label>البائع</label><input id="uSeller">
+      <button class="btn" id="addUp">إضافة</button>
+      <div id="ups" style="margin-top:12px"></div>
+    </div>
+
+    <div class="card">
+      <h2>طلبات البائعين</h2>
+      <div id="sellers"><p class="muted">لا توجد طلبات بعد.</p></div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { firebaseConfig, ADMIN_EMAIL } from './config.js';
+const $ = id => document.getElementById(id);
+const fmt = n => Number(n || 0).toLocaleString('en-US');
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let tt; const toast = t => { $('toast').textContent = t; $('toast').classList.add('show'); clearTimeout(tt); tt = setTimeout(() => $('toast').classList.remove('show'), 2500); };
+const STATUS = { queued: 'في الانتظار', live: 'مباشر الآن', sold: 'بيعت', unsold: 'لم تُبع' };
+
+if (!firebaseConfig) { $('noConfig').style.display = 'block'; }
+else start();
+
+async function start(){
+  const B = 'https://www.gstatic.com/firebasejs/10.12.2/';
+  const [{ initializeApp }, A, F] = await Promise.all([import(B+'firebase-app.js'), import(B+'firebase-auth.js'), import(B+'firebase-firestore.js')]);
+  const { getFirestore, collection, doc, query, orderBy, onSnapshot, addDoc, setDoc, updateDoc, deleteDoc, getDoc, serverTimestamp, Timestamp } = F;
+  const app = initializeApp(firebaseConfig), auth = A.getAuth(app), db = getFirestore(app);
+  const unsubs = [];
+
+  $('inBtn').onclick = () => A.signInWithEmailAndPassword(auth, $('email').value.trim(), $('pass').value).catch(e => $('loginMsg').textContent = 'تعذّر الدخول: ' + e.code);
+  $('upBtn').onclick = () => A.createUserWithEmailAndPassword(auth, $('email').value.trim(), $('pass').value).catch(e => $('loginMsg').textContent = 'تعذّر إنشاء الحساب: ' + e.code);
+  $('outBtn').onclick = () => A.signOut(auth);
+
+  A.onAuthStateChanged(auth, u => {
+    unsubs.splice(0).forEach(f => f());
+    const ok = u && !u.isAnonymous && (u.email || '').toLowerCase() === ADMIN_EMAIL.toLowerCase();
+    $('login').style.display = ok ? 'none' : 'block';
+    $('app').style.display = ok ? 'block' : 'none';
+    $('outBtn').style.display = u && !u.isAnonymous ? 'block' : 'none';
+    if (u && !u.isAnonymous && !ok) $('loginMsg').textContent = 'هذا الحساب ليس حساب المدير.';
+    if (ok) load();
+  });
+
+  let lots = [];
+  async function load(){
+    const s = await getDoc(doc(db, 'settings', 'live')); const d = s.data() || {};
+    $('sTitle').value = d.title || ''; $('sSeller').value = d.seller || ''; $('sStream').value = d.streamUrl || '';
+
+    unsubs.push(onSnapshot(query(collection(db, 'lots'), orderBy('order')), snap => {
+      lots = snap.docs.map(x => ({ id: x.id, ...x.data() }));
+      $('lots').innerHTML = lots.map(l => `<div class="item"><div><b>${esc(l.name)}</b> <span class="st ${l.status}">${STATUS[l.status] || l.status}</span><br>
+        <span class="muted">افتتاح ${fmt(l.startPrice)} · الحالي ${fmt(l.currentBid)} · شراء فوري ${fmt(l.buyPrice)} ر.س${l.leaderName ? ' · المتصدّر: ' + esc(l.leaderName) : ''} · ${l.bidCount || 0} مزايدة</span></div>
+        <div class="acts"><button class="btn ghost sm" data-reset="${l.id}">إعادة</button><button class="btn red sm" data-del="${l.id}">حذف</button></div></div>`).join('') || '<p class="muted">لا توجد قطع بعد.</p>';
+      document.querySelectorAll('[data-del]').forEach(b => b.onclick = () => { if (b.dataset.armed) deleteDoc(doc(db, 'lots', b.dataset.del)); else { b.dataset.armed = 1; b.textContent = 'تأكيد الحذف'; } });
+      document.querySelectorAll('[data-reset]').forEach(b => b.onclick = () => { const l = lots.find(x => x.id === b.dataset.reset);
+        updateDoc(doc(db, 'lots', l.id), { status: 'queued', currentBid: l.startPrice, leaderName: '', leaderUid: '', bidCount: 0, soldPrice: 0, endsAt: Timestamp.now() }).then(() => toast('أُعيدت القطعة للانتظار')); });
+    }));
+
+    unsubs.push(onSnapshot(query(collection(db, 'upcoming'), orderBy('order')), snap => {
+      $('ups').innerHTML = snap.docs.map(x => { const u = x.data(); return `<div class="item"><div><b>${esc(u.title)}</b><br><span class="muted">${esc(u.when)} · ${esc(u.seller)}</span></div><button class="btn red sm" data-udel="${x.id}">حذف</button></div>`; }).join('') || '<p class="muted">لا توجد جلسات قادمة.</p>';
+      document.querySelectorAll('[data-udel]').forEach(b => b.onclick = () => deleteDoc(doc(db, 'upcoming', b.dataset.udel)));
+    }));
+
+    unsubs.push(onSnapshot(query(collection(db, 'sellers'), orderBy('at', 'desc')), snap => {
+      $('sellers').innerHTML = snap.docs.map(x => { const s = x.data(); return `<div class="item"><div><b>${esc(s.name)}</b> — ${esc(s.city)} · ${esc(s.type)}<br><span class="muted" dir="ltr">${esc(s.phone)}</span><br><span class="muted">${esc(s.items)}</span></div><button class="btn red sm" data-sdel="${x.id}">حذف</button></div>`; }).join('') || '<p class="muted">لا توجد طلبات بعد.</p>';
+      document.querySelectorAll('[data-sdel]').forEach(b => b.onclick = () => deleteDoc(doc(db, 'sellers', b.dataset.sdel)));
+    }));
+  }
+
+  $('saveSettings').onclick = () => setDoc(doc(db, 'settings', 'live'), { title: $('sTitle').value.trim(), seller: $('sSeller').value.trim(), streamUrl: $('sStream').value.trim() }, { merge: true }).then(() => toast('تم الحفظ ✔'));
+
+  $('addLot').onclick = async () => {
+    const name = $('lName').value.trim(), startPrice = Math.round(+$('lStart').value), buyPrice = Math.round(+$('lBuy').value), durationSec = Math.max(15, Math.round(+$('lDur').value || 60));
+    if (!name || !startPrice || !buyPrice) return toast('أكمل الاسم والأسعار');
+    if (buyPrice <= startPrice) return toast('سعر الشراء الفوري يجب أن يكون أعلى من سعر الافتتاح');
+    const order = lots.reduce((m, l) => Math.max(m, l.order || 0), 0) + 1;
+    await addDoc(collection(db, 'lots'), { name, tags: $('lTags').value.split(/[,،]/).map(t => t.trim()).filter(Boolean), startPrice, buyPrice, durationSec, order,
+      status: 'queued', currentBid: startPrice, leaderName: '', leaderUid: '', bidCount: 0, soldPrice: 0, endsAt: Timestamp.now() });
+    ['lName','lTags','lStart','lBuy'].forEach(i => $(i).value = ''); toast('أُضيفت القطعة ✔');
+  };
+
+  $('startBtn').onclick = () => {
+    if (lots.some(l => l.status === 'live')) return toast('توجد قطعة مباشرة الآن');
+    const q = lots.find(l => l.status === 'queued'); if (!q) return toast('لا توجد قطع في الانتظار');
+    updateDoc(doc(db, 'lots', q.id), { status: 'live', endsAt: Timestamp.fromMillis(Date.now() + q.durationSec * 1000) }).then(() => toast('بدأت الجلسة 🔴'));
+  };
+  $('endNowBtn').onclick = () => { const l = lots.find(x => x.status === 'live'); if (!l) return toast('لا توجد قطعة مباشرة');
+    const n = lots.find(x => x.status === 'queued');
+    const b = F.writeBatch(db);
+    b.update(doc(db, 'lots', l.id), l.leaderUid ? { status: 'sold', soldPrice: l.currentBid, endsAt: Timestamp.now() } : { status: 'unsold', endsAt: Timestamp.now() });
+    if (n) b.update(doc(db, 'lots', n.id), { status: 'live', endsAt: Timestamp.fromMillis(Date.now() + (n.durationSec + 4) * 1000) });
+    b.commit().then(() => toast(n ? 'أُغلقت القطعة وبدأت التالية' : 'أُغلقت القطعة')); };
+
+  $('addUp').onclick = async () => {
+    const title = $('uTitle').value.trim(); if (!title) return toast('اكتب العنوان');
+    await addDoc(collection(db, 'upcoming'), { when: $('uWhen').value.trim(), title, desc: $('uDesc').value.trim(), seller: $('uSeller').value.trim(), order: Date.now() });
+    ['uWhen','uTitle','uDesc','uSeller'].forEach(i => $(i).value = ''); toast('أُضيفت الجلسة ✔');
+  };
+}
+</script>
+</body>
+</html>

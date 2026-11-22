@@ -1,0 +1,77 @@
+rules_version = '2';
+// قواعد أمان ترفت الطيب — الصقها في Firebase Console > Firestore Database > Rules
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function isAdmin() {
+      return signedIn() && request.auth.token.get('email', '').lower() == 'taraft.tf@gmail.com';
+    }
+    function changed() { return request.resource.data.diff(resource.data).affectedKeys(); }
+    function okName() { return request.resource.data.leaderName is string && request.resource.data.leaderName.size() <= 30; }
+
+    // مزايدة عادية: أعلى من الحالية وأقل من سعر الشراء الفوري، وقبل انتهاء الوقت
+    function validBid() {
+      return signedIn() && resource.data.status == 'live' && request.time < resource.data.endsAt
+        && changed().hasOnly(['currentBid', 'leaderName', 'leaderUid', 'endsAt', 'bidCount'])
+        && request.resource.data.currentBid is number
+        && request.resource.data.currentBid > resource.data.currentBid
+        && request.resource.data.currentBid < resource.data.buyPrice
+        && request.resource.data.leaderUid == request.auth.uid && okName()
+        && (request.resource.data.endsAt == resource.data.endsAt
+            || (request.resource.data.endsAt > resource.data.endsAt
+                && request.resource.data.endsAt <= request.time + duration.value(15, 's')));
+    }
+    // شراء فوري بسعر «اشترِ الآن»
+    function validBuy() {
+      return signedIn() && resource.data.status == 'live' && request.time < resource.data.endsAt
+        && changed().hasOnly(['currentBid', 'leaderName', 'leaderUid', 'status', 'soldPrice', 'bidCount'])
+        && request.resource.data.status == 'sold'
+        && request.resource.data.currentBid == resource.data.buyPrice
+        && request.resource.data.soldPrice == resource.data.buyPrice
+        && request.resource.data.leaderUid == request.auth.uid && okName();
+    }
+    // إغلاق قطعة انتهى وقتها
+    function validClose() {
+      return signedIn() && resource.data.status == 'live' && request.time > resource.data.endsAt
+        && changed().hasOnly(['status', 'soldPrice'])
+        && ((resource.data.leaderUid != '' && request.resource.data.status == 'sold'
+             && request.resource.data.soldPrice == resource.data.currentBid)
+            || (resource.data.leaderUid == '' && request.resource.data.status == 'unsold'));
+    }
+    // فتح القطعة التالية
+    function validOpen() {
+      return signedIn() && resource.data.status == 'queued'
+        && changed().hasOnly(['status', 'endsAt'])
+        && request.resource.data.status == 'live'
+        && request.resource.data.endsAt <= request.time + duration.value(resource.data.durationSec + 30, 's');
+    }
+
+    match /lots/{lotId} {
+      allow read: if true;
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin() || validBid() || validBuy() || validClose() || validOpen();
+
+      match /bids/{bidId} {
+        allow read: if true;
+        allow create: if signedIn()
+          && request.resource.data.keys().hasOnly(['uid', 'name', 'amount', 'at'])
+          && request.resource.data.uid == request.auth.uid
+          && request.resource.data.amount is number
+          && request.resource.data.name is string && request.resource.data.name.size() <= 30;
+        allow delete: if isAdmin();
+      }
+    }
+
+    match /settings/{id} { allow read: if true; allow write: if isAdmin(); }
+    match /upcoming/{id} { allow read: if true; allow write: if isAdmin(); }
+
+    match /sellers/{id} {
+      allow create: if request.resource.data.keys().hasOnly(['name', 'phone', 'city', 'type', 'items', 'at'])
+        && request.resource.data.name is string && request.resource.data.name.size() < 100
+        && request.resource.data.phone is string && request.resource.data.phone.size() < 20
+        && request.resource.data.items is string && request.resource.data.items.size() < 1000;
+      allow read, delete: if isAdmin();
+    }
+  }
+}
