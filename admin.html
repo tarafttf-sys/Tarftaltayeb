@@ -255,7 +255,7 @@ async function start(){
       const msg = `السلام عليكم ${b.name || l.leaderName}، مبروك فوزك في مزاد ترفت الطيب بـ «${l.name}» بسعر ${fmt(l.soldPrice)} ر.س. نتواصل معك لترتيب الدفع والتوصيل.`;
       return `<div class="item"><div class="info">${m.image ? `<img class="thumb" src="${m.image}" alt="">` : '<div class="thumb">🏆</div>'}
         <div><b>${esc(l.name)}</b> ${l.delivered ? '<span class="st done">✔ تم التسليم</span>' : '<span class="st">بانتظار التسليم</span>'}<br>
-        <span class="muted">الفائز: <b>${esc(b.name || l.leaderName)}</b> · ${fmt(l.soldPrice)} ر.س${b.phone ? ` · <span dir="ltr">${esc(b.phone)}</span>` : ' · لا يوجد رقم'}</span></div></div>
+        <span class="muted">الفائز: <b>${esc(b.name || l.leaderName)}</b>${(b.paddle || l.leaderPaddle) ? ' · مضرب #' + (b.paddle || l.leaderPaddle) : ''} · ${fmt(l.soldPrice)} ر.س${b.phone ? ` · <span dir="ltr">${esc(b.phone)}</span>` : ' · لا يوجد رقم'}</span></div></div>
         <div class="acts">${b.phone ? `<a class="btn sm wa" href="${waUrl(b.phone, msg)}" target="_blank" rel="noopener">واتساب</a><a class="btn ghost sm" href="tel:${esc(b.phone)}">اتصال</a>` : ''}
         <button class="btn ghost sm" data-dlv="${l.id}">${l.delivered ? 'إلغاء التسليم' : '✔ تم التسليم'}</button></div></div>`; }).join('') || '<p class="muted">لا توجد قطع مباعة بعد.</p>';
     document.querySelectorAll('[data-dlv]').forEach(b => b.onclick = () => { const l = lots.find(x => x.id === b.dataset.dlv); updateDoc(doc(db, 'lots', l.id), { delivered: !l.delivered }); });
@@ -264,7 +264,7 @@ async function start(){
     $('lots').innerHTML = lots.map(l => { const m = media[l.id] || {};
       return `<div class="item"><div class="info">${m.image ? `<img class="thumb" src="${m.image}" alt="">` : `<div class="thumb">${m.videoUrl ? '🎬' : '📷'}</div>`}
         <div><b>${esc(l.name)}</b> <span class="st ${l.status}">${STATUS[l.status] || l.status}</span>${m.videoUrl ? ' <span class="st">🎬 فيديو</span>' : ''}<br>
-        <span class="muted">افتتاح ${fmt(l.startPrice)} · الحالي ${fmt(l.currentBid)} · فوري ${fmt(l.buyPrice)} ر.س${l.leaderName ? ' · المتصدّر: ' + esc(l.leaderName) : ''} · ${l.bidCount || 0} مزايدة · ${durTxt(l.durationSec)}</span></div></div>
+        <span class="muted">افتتاح ${fmt(l.startPrice)} · الحالي ${fmt(l.currentBid)} · فوري ${fmt(l.buyPrice)} ر.س${l.leaderName ? ' · المتصدّر: ' + (l.leaderPaddle ? '#' + l.leaderPaddle + ' ' : '') + esc(l.leaderName) : ''} · ${l.bidCount || 0} مزايدة · ${durTxt(l.durationSec)}</span></div></div>
         <div class="acts"><button class="btn ghost sm" data-img="${l.id}">📷 الصورة</button><button class="btn ghost sm" data-reset="${l.id}">إعادة</button><button class="btn red sm" data-del="${l.id}">حذف</button></div></div>`; }).join('') || '<p class="muted">لا توجد قطع بعد. أضف أول قطعة بالأسفل.</p>';
     document.querySelectorAll('[data-del]').forEach(b => b.onclick = () => { if (b.dataset.armed) { deleteDoc(doc(db, 'lots', b.dataset.del)); deleteDoc(doc(db, 'lotMedia', b.dataset.del)).catch(() => {}); } else { b.dataset.armed = 1; b.textContent = 'تأكيد الحذف'; } });
     document.querySelectorAll('[data-reset]').forEach(b => b.onclick = () => { const l = lots.find(x => x.id === b.dataset.reset);
