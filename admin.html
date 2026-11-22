@@ -54,7 +54,7 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--gold)}
 </style>
 </head>
 <body>
-<header><div class="wrap"><h1>لوحة تحكم ترفت الطيب</h1><div style="display:flex;gap:8px"><a class="btn ghost sm" href="./" target="_blank">عرض الموقع</a><button class="btn ghost sm" id="outBtn" style="display:none">خروج</button></div></div></header>
+<header><div class="wrap"><h1>لوحة تحكم ترفت الطيب</h1><div style="display:flex;gap:8px"><a class="btn ghost sm" href="./" id="siteLink">عرض الموقع</a><button class="btn ghost sm" id="outBtn" style="display:none">خروج</button></div></div></header>
 <div class="wrap">
 
   <div class="card" id="noConfig" style="display:none;margin-top:20px">
@@ -196,6 +196,7 @@ let tt; const toast = t => { $('toast').textContent = t; $('toast').classList.ad
 const durTxt = s => s >= 3600 && s % 3600 === 0 ? (s/3600) + ' ساعة' : s >= 60 && s % 60 === 0 ? (s/60) + ' دقيقة' : s + ' ثانية';
 const STATUS = { queued: 'في الانتظار', live: 'مباشر الآن', sold: 'بيعت', unsold: 'لم تُبع' };
 
+if (window.top !== window) { $('siteLink').style.display = 'none'; document.querySelector('header h1').style.fontSize = '20px'; }
 // tabs
 document.querySelectorAll('.tab').forEach(t => t.onclick = () => {
   document.querySelectorAll('.tab').forEach(x => x.classList.toggle('on', x === t));
