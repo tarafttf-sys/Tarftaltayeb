@@ -50,7 +50,8 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--gold)}
 .wa{background:#25D366!important;color:#fff!important;text-decoration:none}
 .st.done{background:#3b7dd8;color:#fff}
 .back-row{padding-top:10px}
-.back{background:none;border:0;font-family:inherit;font-size:15px;font-weight:700;color:var(--gold);cursor:pointer;padding:4px 0}
+.hd-r{display:flex;align-items:center;gap:10px}
+.back{display:inline-flex;align-items:center;gap:3px;background:var(--bg2);border:1px solid var(--line);border-radius:20px;font-family:inherit;font-size:13px;font-weight:700;color:var(--gold);cursor:pointer;padding:4px 10px 4px 12px;white-space:nowrap}
 .set-card summary{cursor:pointer;list-style:none}
 .set-card summary::-webkit-details-marker{display:none}
 .set-card[open] summary{margin-bottom:6px}
@@ -60,8 +61,7 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--gold)}
 </style>
 </head>
 <body>
-<header><div class="wrap"><h1>لوحة تحكم ترفت الطيب</h1><div style="display:flex;gap:8px"><a class="btn ghost sm" href="./" id="siteLink">عرض الموقع</a><button class="btn ghost sm" id="outBtn" style="display:none">خروج</button></div></div></header>
-<div class="wrap back-row" id="backRow" style="display:none"><button type="button" class="back" id="backBtn">→ رجوع</button></div>
+<header><div class="wrap"><div class="hd-r"><button type="button" class="back" id="backBtn" style="display:none" aria-label="رجوع"><svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3l5 5-5 5"/></svg>رجوع</button><h1>لوحة تحكم ترفت الطيب</h1></div><div style="display:flex;gap:8px"><a class="btn ghost sm" href="./" id="siteLink">عرض الموقع</a><button class="btn ghost sm" id="outBtn" style="display:none">خروج</button></div></div></header>
 <div class="wrap">
 
   <div class="card" id="noConfig" style="display:none;margin-top:20px">
@@ -71,10 +71,9 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--gold)}
 
   <div class="card" id="login" style="display:none;margin-top:20px">
     <h2>تسجيل دخول المدير</h2>
-    <label>البريد</label><input id="email" type="email" value="taraft.tf@gmail.com" dir="ltr">
+    <input id="email" type="hidden">
     <label>كلمة المرور</label><input id="pass" type="password" dir="ltr">
     <button class="btn" id="inBtn">دخول</button>
-    <button class="btn ghost" id="upBtn">إنشاء حساب المدير (أول مرة فقط)</button>
     <div class="msg" id="loginMsg"></div>
   </div>
 
@@ -104,7 +103,7 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--gold)}
         <label>اسم الصنف</label><input id="lName" placeholder="مثال: عود كمبودي غرقي">
         <label>التصنيف</label>
         <select id="lCat"><option value="">— اختر التصنيف —</option><option>عود خام</option><option>دهن العود</option><option>المخلّطات</option><option>المباخر</option><option>قطع المقتنين</option><option>الهدايا</option></select>
-        <label>الوسوم (افصل بينها بفاصلة)</label><input id="lTags" placeholder="كمبودي, 12 جرام, غرقي, ✔ مفحوص">
+        <label>الوزن</label><input id="lTags" placeholder="مثال: 12 جرام">
         <label>سعر الافتتاح (ر.س)</label><input id="lStart" type="text" inputmode="numeric">
         <label>مدة المزاد على الصنف</label>
         <div class="row" style="grid-template-columns:2fr 1fr">
@@ -121,7 +120,7 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--gold)}
         </div>
         <label>رابط فيديو الصنف (اختياري)</label>
         <input id="lVideo" dir="ltr" placeholder="رابط YouTube أو رابط مباشر لملف mp4">
-        <p class="muted" style="margin-top:4px">إذا أضفت فيديو يظهر بدل الصورة وقت عرض الصنف.</p>
+        <p class="muted" style="margin-top:4px">إذا أضفت فيديو يظهر بدل الصورة وقت عرض الصنف. الأفضل رابط YouTube (عادي أو Shorts). للرابط المباشر: ملف MP4 بدقة 720p، مدته 15–60 ثانية، وحجمه أقل من 20 ميجا.</p>
         <button class="btn" id="addLot">إضافة الصنف</button>
       </div>
       <details class="card set-card">
@@ -207,7 +206,7 @@ let tt; const toast = t => { $('toast').textContent = t; $('toast').classList.ad
 const durTxt = s => s >= 3600 && s % 3600 === 0 ? (s/3600) + ' ساعة' : s >= 60 && s % 60 === 0 ? (s/60) + ' دقيقة' : s + ' ثانية';
 const STATUS = { queued: 'في الانتظار', live: 'مباشر الآن', sold: 'بيعت', unsold: 'لم تُبع' };
 
-if (window.top !== window) { $('siteLink').style.display = 'none'; $('backRow').style.display = ''; $('backBtn').onclick = () => window.parent.postMessage('closeAdmin', location.origin); }
+if (window.top !== window) { $('siteLink').style.display = 'none'; $('backBtn').style.display = ''; $('backBtn').onclick = () => window.parent.postMessage('closeAdmin', location.origin); }
 // tabs
 document.querySelectorAll('.tab').forEach(t => t.onclick = () => {
   document.querySelectorAll('.tab').forEach(x => x.classList.toggle('on', x === t));
@@ -244,8 +243,9 @@ async function start(){
     'auth/user-not-found': 'لا يوجد حساب بهذا البريد', 'auth/email-already-in-use': 'الحساب موجود مسبقاً — اضغط «دخول»', 'auth/weak-password': 'كلمة المرور قصيرة (6 أحرف على الأقل)',
     'auth/invalid-email': 'البريد غير صحيح', 'auth/too-many-requests': 'محاولات كثيرة، انتظر قليلاً ثم حاول' };
   const aerr = e => AERR[e.code] || ('حدث خطأ: ' + e.code);
-  $('inBtn').onclick = () => A.signInWithEmailAndPassword(auth, $('email').value.trim(), $('pass').value).catch(e => $('loginMsg').textContent = aerr(e));
-  $('upBtn').onclick = () => A.createUserWithEmailAndPassword(auth, $('email').value.trim(), $('pass').value).catch(e => $('loginMsg').textContent = aerr(e));
+  $('email').value = ADMIN_EMAIL;
+  $('pass').onkeydown = e => { if (e.key === 'Enter') $('inBtn').click(); };
+  $('inBtn').onclick = () => A.signInWithEmailAndPassword(auth, ADMIN_EMAIL, $('pass').value).catch(e => $('loginMsg').textContent = aerr(e));
   $('outBtn').onclick = () => A.signOut(auth);
 
   A.onAuthStateChanged(auth, u => {
@@ -255,7 +255,7 @@ async function start(){
     $('app').style.display = ok ? 'block' : 'none';
     $('outBtn').style.display = u && !u.isAnonymous ? 'block' : 'none';
     if (u && !u.isAnonymous && !ok) $('loginMsg').textContent = 'هذا الحساب ليس حساب المدير.';
-    if (ok) load();
+    if (ok) { load(); syncClock(); }
   });
 
   let lots = [], media = {}, swapId = null; const bidders = {};
@@ -315,6 +315,13 @@ async function start(){
     }));
   }
 
+  let clockOffset = 0;
+  async function syncClock(){
+    try { const u = auth.currentUser; if (!u) return; const ref = doc(db, 'clock', u.uid); let best = null;
+      for (let i = 0; i < 3; i++) { const t0 = Date.now(); await setDoc(ref, { t: serverTimestamp() }); const t1 = Date.now();
+        const st = (await getDoc(ref)).data()?.t?.toMillis?.(); if (st && (!best || t1 - t0 < best.rtt)) best = { rtt: t1 - t0, off: st - (t0 + t1) / 2 }; }
+      if (best) clockOffset = best.off; } catch (e) { console.warn('clock', e.code || e); }
+  }
   let members = [];
   function renderMembers(){
     const q = ($('memSearch').value || '').trim();
@@ -346,7 +353,7 @@ async function start(){
     $('addLot').disabled = true;
     try {
       const order = lots.reduce((m, l) => Math.max(m, l.order || 0), 0) + 1;
-      const ref = await addDoc(collection(db, 'lots'), { name, category, tags: $('lTags').value.split(/[,،]/).map(t => t.trim()).filter(Boolean), startPrice, buyPrice, durationSec, order,
+      const ref = await addDoc(collection(db, 'lots'), { name, category, weight: $('lTags').value.trim(), tags: $('lTags').value.trim() ? [$('lTags').value.trim()] : [], startPrice, buyPrice, durationSec, order,
         status: 'queued', currentBid: startPrice, leaderName: '', leaderUid: '', bidCount: 0, soldPrice: 0, endsAt: Timestamp.now() });
       if (newImg || videoUrl) await setDoc(doc(db, 'lotMedia', ref.id), { image: newImg || '', videoUrl });
       ['lName','lTags','lStart','lVideo'].forEach(i => $(i).value = ''); $('lCat').value = ''; $('lImg').value = ''; newImg = null; $('lPrev').textContent = '📷';
@@ -358,7 +365,7 @@ async function start(){
   $('startBtn').onclick = () => {
     if (lots.some(l => l.status === 'live')) return toast('توجد قطعة مباشرة الآن');
     const q = lots.find(l => l.status === 'queued'); if (!q) return toast('لا توجد قطع في الانتظار');
-    updateDoc(doc(db, 'lots', q.id), { status: 'live', endsAt: Timestamp.fromMillis(Date.now() + q.durationSec * 1000) }).then(() => toast('بدأت الجلسة 🔴'));
+    updateDoc(doc(db, 'lots', q.id), { status: 'live', endsAt: Timestamp.fromMillis(Date.now() + clockOffset + q.durationSec * 1000) }).then(() => toast('بدأت الجلسة 🔴'));
   };
 
   $('addUp').onclick = async () => {
